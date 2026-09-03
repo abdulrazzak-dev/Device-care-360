@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="shared" />
+        <module name="technician-service" />
+        <module name="review-service" />
+        <module name="user-service" />
+        <module name="discovery-service" />
+        <module name="notification-service" />
+        <module name="config-server" />
+        <module name="auth-service" />
+        <module name="payment-service" />
+        <module name="booking-service" />
+        <module name="api-gateway" />
+        <module name="repair-guide-service" />
+        <module name="ai-troubleshooting-service" />
+        <module name="device-service" />
+        <module name="admin-service" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

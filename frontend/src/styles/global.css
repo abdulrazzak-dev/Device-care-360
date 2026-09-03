@@ -1,0 +1,71 @@
+@import './variables.css';
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-accent);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  background-color: var(--bg-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.badge-risk-low {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-risk-medium {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-risk-high {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.badge-risk-critical {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.critical-hazard-banner {
+  background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}

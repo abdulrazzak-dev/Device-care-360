@@ -1,0 +1,29 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ai-troubleshooting-service
+  data:
+    mongodb:
+      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/troubleshoot_db?retryWrites=true&w=majority&appName=Cluster0
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

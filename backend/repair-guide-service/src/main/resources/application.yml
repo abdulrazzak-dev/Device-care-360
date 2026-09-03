@@ -1,0 +1,20 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: repair-guide-service
+  data:
+    mongodb:
+      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/repairguide_db?retryWrites=true&w=majority&appName=Cluster0
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

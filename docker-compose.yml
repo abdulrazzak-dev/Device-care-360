@@ -1,0 +1,212 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: devicecare-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: devicecare_db
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: devicecare-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  config-server:
+    build: ./backend/config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+
+  discovery-service:
+    build: ./backend/discovery-service
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    depends_on:
+      - config-server
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_HOST=discovery-service
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    depends_on:
+      - discovery-service
+
+  auth-service:
+    build: ./backend/auth-service
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/auth_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/user_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  device-service:
+    build: ./backend/device-service
+    container_name: device-service
+    ports:
+      - "8083:8083"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/device_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  ai-troubleshooting-service:
+    build: ./backend/ai-troubleshooting-service
+    container_name: ai-troubleshooting-service
+    ports:
+      - "8084:8084"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/troubleshooting_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  repair-guide-service:
+    build: ./backend/repair-guide-service
+    container_name: repair-guide-service
+    ports:
+      - "8085:8085"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/repair_guide_db
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - discovery-service
+
+  technician-service:
+    build: ./backend/technician-service
+    container_name: technician-service
+    ports:
+      - "8086:8086"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/technician_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  booking-service:
+    build: ./backend/booking-service
+    container_name: booking-service
+    ports:
+      - "8087:8087"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/booking_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  payment-service:
+    build: ./backend/payment-service
+    container_name: payment-service
+    ports:
+      - "8088:8088"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/payment_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  review-service:
+    build: ./backend/review-service
+    container_name: review-service
+    ports:
+      - "8089:8089"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/review_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  notification-service:
+    build: ./backend/notification-service
+    container_name: notification-service
+    ports:
+      - "8090:8090"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/notification_db
+      - RABBITMQ_HOST=rabbitmq
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - discovery-service
+
+  admin-service:
+    build: ./backend/admin-service
+    container_name: admin-service
+    ports:
+      - "8091:8091"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/admin_db
+      - EUREKA_HOST=discovery-service
+    depends_on:
+      - mongodb
+      - discovery-service
+
+volumes:
+  mongo_data:

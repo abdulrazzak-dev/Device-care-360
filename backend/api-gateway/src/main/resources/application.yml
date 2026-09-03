@@ -1,0 +1,106 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+        corsConfigurations:
+        '[/**]':
+          allowedOrigins: "*"
+          allowedMethods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - PATCH
+            - OPTIONS
+          allowedHeaders: "*"
+      routes:
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - AuthenticationFilter
+
+        - id: device-service
+          uri: lb://DEVICE-SERVICE
+          predicates:
+            - Path=/api/devices/**
+          filters:
+            - AuthenticationFilter
+
+        - id: ai-troubleshooting-service
+          uri: lb://AI-TROUBLESHOOTING-SERVICE
+          predicates:
+            - Path=/api/troubleshooting/**
+          filters:
+            - AuthenticationFilter
+
+        - id: repair-guide-service
+          uri: lb://REPAIR-GUIDE-SERVICE
+          predicates:
+            - Path=/api/repair-guides/**
+          filters:
+            - AuthenticationFilter
+
+        - id: technician-service
+          uri: lb://TECHNICIAN-SERVICE
+          predicates:
+            - Path=/api/technicians/**
+          filters:
+            - AuthenticationFilter
+
+        - id: booking-service
+          uri: lb://BOOKING-SERVICE
+          predicates:
+            - Path=/api/bookings/**
+          filters:
+            - AuthenticationFilter
+
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - AuthenticationFilter
+
+        - id: review-service
+          uri: lb://REVIEW-SERVICE
+          predicates:
+            - Path=/api/reviews/**
+          filters:
+            - AuthenticationFilter
+
+        - id: admin-service
+          uri: lb://ADMIN-SERVICE
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - AuthenticationFilter
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
