@@ -1,0 +1,8 @@
+com/devicecare360/booking/controller/BookingController.class
+com/devicecare360/booking/document/Booking$BookingBuilder.class
+com/devicecare360/booking/repository/BookingRepository.class
+com/devicecare360/booking/client/TechnicianClient.class
+com/devicecare360/booking/BookingServiceApplication.class
+com/devicecare360/booking/document/Booking.class
+com/devicecare360/booking/service/BookingService.class
+com/devicecare360/booking/config/RabbitMQConfig.class

@@ -1,0 +1,4 @@
+com/devicecare360/apigateway/ApiGatewayApplication.class
+com/devicecare360/apigateway/config/CorsConfig.class
+com/devicecare360/apigateway/filter/AuthenticationFilter.class
+com/devicecare360/apigateway/filter/AuthenticationFilter$Config.class

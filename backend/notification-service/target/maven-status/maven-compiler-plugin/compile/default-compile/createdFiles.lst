@@ -1,0 +1,8 @@
+com/devicecare360/notification/NotificationServiceApplication.class
+com/devicecare360/notification/controller/NotificationController.class
+com/devicecare360/notification/document/NotificationRecord$NotificationRecordBuilder.class
+com/devicecare360/notification/service/NotificationService.class
+com/devicecare360/notification/repository/NotificationRecordRepository.class
+com/devicecare360/notification/config/RabbitMQConfig.class
+com/devicecare360/notification/document/NotificationRecord.class
+com/devicecare360/notification/messaging/NotificationEventListener.class

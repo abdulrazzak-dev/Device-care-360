@@ -1,0 +1,8 @@
+com/devicecare360/review/client/BookingClient.class
+com/devicecare360/review/service/ReviewService.class
+com/devicecare360/review/document/Review$ReviewBuilder.class
+com/devicecare360/review/document/Review.class
+com/devicecare360/review/controller/ReviewController.class
+com/devicecare360/review/repository/ReviewRepository.class
+com/devicecare360/review/ReviewServiceApplication.class
+com/devicecare360/review/config/RabbitMQConfig.class

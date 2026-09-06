@@ -1,0 +1,8 @@
+com/devicecare360/technician/messaging/TechnicianEventListener.class
+com/devicecare360/technician/service/TechnicianService.class
+com/devicecare360/technician/config/RabbitMQConfig.class
+com/devicecare360/technician/document/TechnicianProfile.class
+com/devicecare360/technician/repository/TechnicianProfileRepository.class
+com/devicecare360/technician/document/TechnicianProfile$TechnicianProfileBuilder.class
+com/devicecare360/technician/controller/TechnicianController.class
+com/devicecare360/technician/TechnicianServiceApplication.class

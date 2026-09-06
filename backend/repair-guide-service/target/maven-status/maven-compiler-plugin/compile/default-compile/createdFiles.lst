@@ -1,0 +1,6 @@
+com/devicecare360/repairguide/service/RepairGuideService.class
+com/devicecare360/repairguide/controller/RepairGuideController.class
+com/devicecare360/repairguide/document/RepairGuide.class
+com/devicecare360/repairguide/document/RepairGuide$RepairGuideBuilder.class
+com/devicecare360/repairguide/repository/RepairGuideRepository.class
+com/devicecare360/repairguide/RepairGuideApplication.class

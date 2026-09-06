@@ -1,0 +1,7 @@
+/app/booking-service/src/main/java/com/devicecare360/booking/BookingServiceApplication.java
+/app/booking-service/src/main/java/com/devicecare360/booking/client/TechnicianClient.java
+/app/booking-service/src/main/java/com/devicecare360/booking/config/RabbitMQConfig.java
+/app/booking-service/src/main/java/com/devicecare360/booking/controller/BookingController.java
+/app/booking-service/src/main/java/com/devicecare360/booking/document/Booking.java
+/app/booking-service/src/main/java/com/devicecare360/booking/repository/BookingRepository.java
+/app/booking-service/src/main/java/com/devicecare360/booking/service/BookingService.java
