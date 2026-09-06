@@ -1,21 +1,6 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:6.0
-    container_name: devicecare-mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_DATABASE: devicecare_db
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: devicecare-rabbitmq
@@ -23,8 +8,9 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    mem_limit: 300m
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -36,12 +22,18 @@ services:
     container_name: config-server
     ports:
       - "8888:8888"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+    mem_limit: 300m
 
   discovery-service:
     build: ./backend/discovery-service
     container_name: discovery-service
     ports:
       - "8761:8761"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+    mem_limit: 300m
     depends_on:
       - config-server
 
@@ -51,8 +43,10 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
       - EUREKA_HOST=discovery-service
-      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - JWT_SECRET=${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    mem_limit: 300m
     depends_on:
       - discovery-service
 
@@ -62,12 +56,14 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/auth_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_AUTH:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_AUTH:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
-      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - JWT_SECRET=${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -77,11 +73,13 @@ services:
     ports:
       - "8082:8082"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/user_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_USER:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/user_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_USER:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/user_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -91,11 +89,13 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/device_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_DEVICE:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/device_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_DEVICE:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/device_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -105,12 +105,14 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/troubleshooting_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_TROUBLESHOOTING:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/troubleshooting_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_TROUBLESHOOTING:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/troubleshooting_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -120,10 +122,12 @@ services:
     ports:
       - "8085:8085"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/repair_guide_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_REPAIR_GUIDE:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/repair_guide_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_REPAIR_GUIDE:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/repair_guide_db?retryWrites=true&w=majority&appName=Cluster0}
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - discovery-service
 
   technician-service:
@@ -132,11 +136,13 @@ services:
     ports:
       - "8086:8086"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/technician_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_TECHNICIAN:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/technician_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_TECHNICIAN:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/technician_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -146,11 +152,13 @@ services:
     ports:
       - "8087:8087"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/booking_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_BOOKING:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/booking_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_BOOKING:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/booking_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -160,11 +168,13 @@ services:
     ports:
       - "8088:8088"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/payment_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_PAYMENT:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/payment_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_PAYMENT:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/payment_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -174,11 +184,13 @@ services:
     ports:
       - "8089:8089"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/review_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_REVIEW:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/review_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_REVIEW:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/review_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -188,11 +200,13 @@ services:
     ports:
       - "8090:8090"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/notification_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_NOTIFICATION:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/notification_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_NOTIFICATION:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/notification_db?retryWrites=true&w=majority&appName=Cluster0}
       - RABBITMQ_HOST=rabbitmq
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - rabbitmq
       - discovery-service
 
@@ -202,11 +216,10 @@ services:
     ports:
       - "8091:8091"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/admin_db
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx180m
+      - SPRING_DATA_MONGODB_URI=${MONGODB_URI_ADMIN:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/admin_db?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI_ADMIN:-mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/admin_db?retryWrites=true&w=majority&appName=Cluster0}
       - EUREKA_HOST=discovery-service
+    mem_limit: 300m
     depends_on:
-      - mongodb
       - discovery-service
-
-volumes:
-  mongo_data:

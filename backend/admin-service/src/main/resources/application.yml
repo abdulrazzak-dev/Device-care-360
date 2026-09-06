@@ -19,6 +19,5 @@ management:
       exposure:
         include: health,info,metrics
 
-environment:
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx200m
+
 
