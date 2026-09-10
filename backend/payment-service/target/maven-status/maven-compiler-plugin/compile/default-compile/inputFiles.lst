@@ -1,8 +1,8 @@
-/app/payment-service/src/main/java/com/devicecare360/payment/PaymentServiceApplication.java
-/app/payment-service/src/main/java/com/devicecare360/payment/config/RabbitMQConfig.java
 /app/payment-service/src/main/java/com/devicecare360/payment/controller/PaymentController.java
 /app/payment-service/src/main/java/com/devicecare360/payment/document/PaymentRecord.java
-/app/payment-service/src/main/java/com/devicecare360/payment/provider/MockPaymentProvider.java
-/app/payment-service/src/main/java/com/devicecare360/payment/provider/PaymentProvider.java
-/app/payment-service/src/main/java/com/devicecare360/payment/repository/PaymentRecordRepository.java
 /app/payment-service/src/main/java/com/devicecare360/payment/service/PaymentService.java
+/app/payment-service/src/main/java/com/devicecare360/payment/PaymentServiceApplication.java
+/app/payment-service/src/main/java/com/devicecare360/payment/provider/MockPaymentProvider.java
+/app/payment-service/src/main/java/com/devicecare360/payment/config/RabbitMQConfig.java
+/app/payment-service/src/main/java/com/devicecare360/payment/repository/PaymentRecordRepository.java
+/app/payment-service/src/main/java/com/devicecare360/payment/provider/PaymentProvider.java

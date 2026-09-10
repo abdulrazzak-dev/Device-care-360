@@ -1,7 +1,7 @@
-/app/device-service/src/main/java/com/devicecare360/device/DeviceServiceApplication.java
-/app/device-service/src/main/java/com/devicecare360/device/client/AiTroubleshootingClient.java
-/app/device-service/src/main/java/com/devicecare360/device/config/RabbitMQConfig.java
-/app/device-service/src/main/java/com/devicecare360/device/controller/DeviceController.java
 /app/device-service/src/main/java/com/devicecare360/device/document/UserDevice.java
+/app/device-service/src/main/java/com/devicecare360/device/controller/DeviceController.java
 /app/device-service/src/main/java/com/devicecare360/device/repository/UserDeviceRepository.java
+/app/device-service/src/main/java/com/devicecare360/device/client/AiTroubleshootingClient.java
+/app/device-service/src/main/java/com/devicecare360/device/DeviceServiceApplication.java
 /app/device-service/src/main/java/com/devicecare360/device/service/DeviceService.java
+/app/device-service/src/main/java/com/devicecare360/device/config/RabbitMQConfig.java

@@ -1,7 +1,7 @@
-/app/review-service/src/main/java/com/devicecare360/review/ReviewServiceApplication.java
-/app/review-service/src/main/java/com/devicecare360/review/client/BookingClient.java
-/app/review-service/src/main/java/com/devicecare360/review/config/RabbitMQConfig.java
 /app/review-service/src/main/java/com/devicecare360/review/controller/ReviewController.java
-/app/review-service/src/main/java/com/devicecare360/review/document/Review.java
 /app/review-service/src/main/java/com/devicecare360/review/repository/ReviewRepository.java
+/app/review-service/src/main/java/com/devicecare360/review/config/RabbitMQConfig.java
+/app/review-service/src/main/java/com/devicecare360/review/ReviewServiceApplication.java
 /app/review-service/src/main/java/com/devicecare360/review/service/ReviewService.java
+/app/review-service/src/main/java/com/devicecare360/review/document/Review.java
+/app/review-service/src/main/java/com/devicecare360/review/client/BookingClient.java

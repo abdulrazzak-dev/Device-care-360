@@ -1,11 +1,11 @@
-/app/auth-service/src/main/java/com/devicecare360/auth/AuthServiceApplication.java
-/app/auth-service/src/main/java/com/devicecare360/auth/config/RabbitMQConfig.java
+/app/auth-service/src/main/java/com/devicecare360/auth/dto/LoginRequest.java
 /app/auth-service/src/main/java/com/devicecare360/auth/config/SecurityConfig.java
 /app/auth-service/src/main/java/com/devicecare360/auth/controller/AuthController.java
-/app/auth-service/src/main/java/com/devicecare360/auth/document/AuthUser.java
-/app/auth-service/src/main/java/com/devicecare360/auth/dto/AuthResponse.java
-/app/auth-service/src/main/java/com/devicecare360/auth/dto/LoginRequest.java
+/app/auth-service/src/main/java/com/devicecare360/auth/AuthServiceApplication.java
 /app/auth-service/src/main/java/com/devicecare360/auth/dto/RegisterRequest.java
 /app/auth-service/src/main/java/com/devicecare360/auth/exception/GlobalExceptionHandler.java
-/app/auth-service/src/main/java/com/devicecare360/auth/repository/AuthUserRepository.java
 /app/auth-service/src/main/java/com/devicecare360/auth/service/AuthService.java
+/app/auth-service/src/main/java/com/devicecare360/auth/dto/AuthResponse.java
+/app/auth-service/src/main/java/com/devicecare360/auth/config/RabbitMQConfig.java
+/app/auth-service/src/main/java/com/devicecare360/auth/document/AuthUser.java
+/app/auth-service/src/main/java/com/devicecare360/auth/repository/AuthUserRepository.java

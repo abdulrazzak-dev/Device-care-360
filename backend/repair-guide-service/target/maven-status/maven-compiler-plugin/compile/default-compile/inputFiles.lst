@@ -1,5 +1,5 @@
-/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/RepairGuideApplication.java
-/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/controller/RepairGuideController.java
 /app/repair-guide-service/src/main/java/com/devicecare360/repairguide/document/RepairGuide.java
-/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/repository/RepairGuideRepository.java
 /app/repair-guide-service/src/main/java/com/devicecare360/repairguide/service/RepairGuideService.java
+/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/repository/RepairGuideRepository.java
+/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/controller/RepairGuideController.java
+/app/repair-guide-service/src/main/java/com/devicecare360/repairguide/RepairGuideApplication.java

@@ -1,7 +1,7 @@
-/app/notification-service/src/main/java/com/devicecare360/notification/NotificationServiceApplication.java
 /app/notification-service/src/main/java/com/devicecare360/notification/config/RabbitMQConfig.java
-/app/notification-service/src/main/java/com/devicecare360/notification/controller/NotificationController.java
-/app/notification-service/src/main/java/com/devicecare360/notification/document/NotificationRecord.java
-/app/notification-service/src/main/java/com/devicecare360/notification/messaging/NotificationEventListener.java
-/app/notification-service/src/main/java/com/devicecare360/notification/repository/NotificationRecordRepository.java
 /app/notification-service/src/main/java/com/devicecare360/notification/service/NotificationService.java
+/app/notification-service/src/main/java/com/devicecare360/notification/NotificationServiceApplication.java
+/app/notification-service/src/main/java/com/devicecare360/notification/messaging/NotificationEventListener.java
+/app/notification-service/src/main/java/com/devicecare360/notification/document/NotificationRecord.java
+/app/notification-service/src/main/java/com/devicecare360/notification/controller/NotificationController.java
+/app/notification-service/src/main/java/com/devicecare360/notification/repository/NotificationRecordRepository.java

@@ -1,0 +1,18 @@
+# Build output folders & JARs
+**/target/
+*.jar
+*.war
+
+# Node dependencies & dist
+**/node_modules/
+**/dist/
+
+# IDE & OS settings
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Log files
+*.log
+hs_err_pid*
