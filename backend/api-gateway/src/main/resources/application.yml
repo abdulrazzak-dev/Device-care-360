@@ -9,7 +9,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOriginPatterns:
+              - "https://*.vercel.app"
+              - "https://device-care-360.vercel.app"
+              - "http://localhost:*"
             allowedMethods:
               - GET
               - POST
