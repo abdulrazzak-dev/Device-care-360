@@ -1,12 +1,12 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 spring:
   application:
     name: auth-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0
+      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.stssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -14,9 +14,11 @@ spring:
     password: ${RABBITMQ_PASS:guest}
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     serviceUrl:
-      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
@@ -26,4 +28,3 @@ management:
     web:
       exposure:
         include: health,info,metrics
-
