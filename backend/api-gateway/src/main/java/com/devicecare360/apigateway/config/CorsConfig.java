@@ -4,55 +4,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.web.cors.reactive.CorsUtils;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 public class CorsConfig {
 
-    private static final String ALLOWED_METHODS = "GET, POST, PUT, DELETE, OPTIONS, PATCH";
-    private static final String MAX_AGE = "3600";
-
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public WebFilter corsFilter() {
-        return (ServerWebExchange ctx, WebFilterChain chain) -> {
-            ServerHttpRequest request = ctx.getRequest();
-            if (CorsUtils.isCorsRequest(request)) {
-                ServerHttpResponse response = ctx.getResponse();
-                HttpHeaders headers = response.getHeaders();
-                String origin = request.getHeaders().getOrigin();
-                if (origin != null && !origin.isEmpty()) {
-                    headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-                } else {
-                    headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-                }
-                headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
-                headers.set(HttpHeaders.ACCESS_CONTROL_MAX_AGE, MAX_AGE);
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOriginPatterns(Collections.singletonList("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        config.setAllowedHeaders(Collections.singletonList("*"));
+        config.setExposedHeaders(Collections.singletonList("*"));
+        config.setMaxAge(3600L);
 
-                String reqHeaders = request.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
-                if (reqHeaders != null && !reqHeaders.isEmpty()) {
-                    headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, reqHeaders);
-                } else {
-                    headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "*");
-                }
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
 
-                headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
-                headers.set(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "*");
-
-                if (request.getMethod() == HttpMethod.OPTIONS) {
-                    response.setStatusCode(HttpStatus.OK);
-                    return response.setComplete();
-                }
-            }
-            return chain.filter(ctx);
-        };
+        return new CorsWebFilter(source);
     }
 }

@@ -69,3 +69,45 @@ a:hover {
   padding: 24px;
   box-shadow: var(--shadow-lg);
 }
+
+/* Fluid responsive typography and word wrapping */
+h1, h2, h3, h4, h5, h6, p, span, div, a, button {
+  overflow-wrap: break-word;
+}
+
+/* Custom horizontal scroll container for wizard steps */
+.wizard-steps-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.wizard-steps-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.wizard-steps-container::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+/* Table responsive smooth scrolling */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile Sidebar Drawer Animation */
+@media (max-width: 991.98px) {
+  .sidebar-backdrop {
+    animation: fadeInBackdrop 0.2s ease forwards;
+  }
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+

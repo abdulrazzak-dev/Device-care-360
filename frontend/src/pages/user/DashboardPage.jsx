@@ -39,12 +39,12 @@ const DashboardPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="d-flex align-items-center justify-content-between mb-4">
+      <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
         <div>
-          <h3 className="fw-bold mb-1">Welcome back, {user?.username}!</h3>
+          <h3 className="fw-bold mb-1 text-break">Welcome back, {user?.username}!</h3>
           <p className="text-muted small mb-0">Overview of your registered devices, AI sessions, and repair appointments.</p>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 flex-wrap">
           <Link to="/diagnose" className="btn btn-primary btn-sm d-flex align-items-center gap-2">
             <Cpu size={16} /> AI Diagnose
           </Link>
@@ -56,27 +56,27 @@ const DashboardPage = () => {
 
       {/* Stats Cards */}
       <div className="row g-3 mb-4">
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm border-start border-4 border-primary">
-            <div className="text-muted small fw-semibold">Registered Devices</div>
+        <div className="col-6 col-md-3">
+          <div className="card p-3 border-0 shadow-sm border-start border-4 border-primary h-100">
+            <div className="text-muted small fw-semibold text-truncate">Registered Devices</div>
             <div className="fs-3 fw-bold mt-1">{devices.length}</div>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm border-start border-4 border-info">
-            <div className="text-muted small fw-semibold">Active Bookings</div>
+        <div className="col-6 col-md-3">
+          <div className="card p-3 border-0 shadow-sm border-start border-4 border-info h-100">
+            <div className="text-muted small fw-semibold text-truncate">Active Bookings</div>
             <div className="fs-3 fw-bold mt-1">{bookings.filter(b => b.status !== 'COMPLETED' && b.status !== 'CANCELLED').length}</div>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm border-start border-4 border-success">
-            <div className="text-muted small fw-semibold">Completed Repairs</div>
+        <div className="col-6 col-md-3">
+          <div className="card p-3 border-0 shadow-sm border-start border-4 border-success h-100">
+            <div className="text-muted small fw-semibold text-truncate">Completed Repairs</div>
             <div className="fs-3 fw-bold mt-1">{bookings.filter(b => b.status === 'COMPLETED').length}</div>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm border-start border-4 border-warning">
-            <div className="text-muted small fw-semibold">AI Diagnoses</div>
+        <div className="col-6 col-md-3">
+          <div className="card p-3 border-0 shadow-sm border-start border-4 border-warning h-100">
+            <div className="text-muted small fw-semibold text-truncate">AI Diagnoses</div>
             <div className="fs-3 fw-bold mt-1">{history.length}</div>
           </div>
         </div>

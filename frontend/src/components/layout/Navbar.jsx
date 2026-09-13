@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Bell, User, LogOut, Cpu } from 'lucide-react';
+import { Shield, Bell, User, LogOut, Cpu, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 
-const Navbar = () => {
+const Navbar = ({ onToggleSidebar, isDashboard = false }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { unreadCount } = useNotification();
   const navigate = useNavigate();
@@ -16,16 +16,32 @@ const Navbar = () => {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2">
-      <div className="container">
-        <Link className="navbar-brand d-flex align-items-center fw-bold text-white fs-4" to="/">
-          <Cpu className="text-primary me-2" size={28} />
-          DeviceCare <span className="text-primary ms-1">360</span>
-        </Link>
+      <div className="container-fluid px-3 px-md-4">
+        <div className="d-flex align-items-center">
+          {isDashboard && (
+            <button
+              className="btn btn-outline-light d-lg-none me-2 p-1 border-0"
+              type="button"
+              onClick={onToggleSidebar}
+              aria-label="Toggle navigation drawer"
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          <Link className="navbar-brand d-flex align-items-center fw-bold text-white fs-4 mb-0" to="/">
+            <Cpu className="text-primary me-2 flex-shrink-0" size={28} />
+            <span className="d-none d-sm-inline">DeviceCare <span className="text-primary">360</span></span>
+            <span className="d-inline d-sm-none">DC<span className="text-primary">360</span></span>
+          </Link>
+        </div>
         <button
           className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarContent"
+          aria-controls="navbarContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
