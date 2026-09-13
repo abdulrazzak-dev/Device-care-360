@@ -16,7 +16,7 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         
-        // Vercel மற்றும் Localhost ஆகிய இரண்டையுமே அனுமதிக்க Patterns சேர்க்கவும்
+       
         corsConfig.setAllowedOriginPatterns(Arrays.asList(
                 "https://*.vercel.app",
                 "http://localhost:*"
