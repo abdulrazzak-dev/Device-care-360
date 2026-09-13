@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.reactive.CorsUtils;
 
 import java.util.List;
 
@@ -37,10 +39,17 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
+            // 1. CORS Preflight (OPTIONS) கோரிக்கைகளை நேராக அனுமதிக்கவும்
+            if (CorsUtils.isPreFlightRequest(request) || request.getMethod() == HttpMethod.OPTIONS) {
+                return chain.filter(exchange);
+            }
+
+            // 2. Open Endpoints (login, register போன்றவை)
             if (isOpenEndpoint(request.getURI().getPath())) {
                 return chain.filter(exchange);
             }
 
+            // 3. Authorization Header சரிபார்ப்பு
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 log.warn("Missing Authorization header for path: {}", request.getURI().getPath());
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
