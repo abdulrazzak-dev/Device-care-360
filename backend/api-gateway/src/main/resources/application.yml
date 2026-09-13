@@ -10,18 +10,22 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
-
-        corsConfigurations:
-        '[/**]':
-          allowedOrigins: "*"
-          allowedMethods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - PATCH
-            - OPTIONS
-          allowedHeaders: "*"
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "https://*.vercel.app"
+              - "http://localhost:*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
       routes:
         - id: auth-service
           uri: lb://AUTH-SERVICE
@@ -104,4 +108,3 @@ management:
     web:
       exposure:
         include: health,info,metrics
-
