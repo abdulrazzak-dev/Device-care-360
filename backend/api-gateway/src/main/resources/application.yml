@@ -14,13 +14,14 @@ spring:
               - "https://device-care-360.vercel.app"
               - "http://localhost:*"
             allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowedHeaders: "*"
+              - "GET"
+              - "POST"
+              - "PUT"
+              - "DELETE"
+              - "OPTIONS"
+              - "PATCH"
+            allowedHeaders:
+              - "*"
             allowCredentials: true
             maxAge: 3600
       discovery:
