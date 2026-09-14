@@ -44,15 +44,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-
-            // 1. Preflight OPTIONS கோரிக்கைகளை உடனடியாக அனுமதிக்கவும்
-            if (request.getMethod() == HttpMethod.OPTIONS || CorsUtils.isPreFlightRequest(request)) {
-                return chain.filter(exchange);
-            }
-
-            // 2. Auth பாதை கோரிக்கைகளை டோக்கன் இன்றி அனுமதிக்கவும்
             String path = request.getURI().getPath();
-            if (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path))) {
+
+            // 1. Immediately bypass authentication for OPTIONS (preflight), CorsUtils, and /api/auth/ endpoints
+            if (request.getMethod() == HttpMethod.OPTIONS
+                    || CorsUtils.isPreFlightRequest(request)
+                    || (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path)))) {
                 return chain.filter(exchange);
             }
 
