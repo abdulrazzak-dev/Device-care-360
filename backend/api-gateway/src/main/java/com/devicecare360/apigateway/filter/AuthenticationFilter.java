@@ -1,7 +1,11 @@
 package com.devicecare360.apigateway.filter;
 
-import com.devicecare360.shared.security.JwtUtils;
-import lombok.extern.slf4j.Slf4j;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -12,11 +16,13 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.reactive.CorsUtils;
 
+import java.security.Key;
 import java.util.List;
 
 @Component
-@Slf4j
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String jwtSecret;
@@ -39,12 +45,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            // 1. Explicitly bypass token checks for OPTIONS (CORS preflight) requests
+            // 1. Preflight OPTIONS கோரிக்கைகளை உடனடியாக அனுமதிக்கவும்
             if (request.getMethod() == HttpMethod.OPTIONS || CorsUtils.isPreFlightRequest(request)) {
                 return chain.filter(exchange);
             }
 
-            // 2. Explicitly bypass token checks for /api/auth/ and other public endpoints
+            // 2. Auth பாதை கோரிக்கைகளை டோக்கன் இன்றி அனுமதிக்கவும்
             String path = request.getURI().getPath();
             if (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path))) {
                 return chain.filter(exchange);
@@ -52,41 +58,52 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             // 3. Authorization Header சரிபார்ப்பு
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                log.warn("Missing Authorization header for path: {}", request.getURI().getPath());
+                log.warn("Missing Authorization header for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                log.warn("Invalid Authorization header format for path: {}", request.getURI().getPath());
+                log.warn("Invalid Authorization header format for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
             String token = authHeader.substring(7);
-            if (!JwtUtils.validateToken(token, jwtSecret)) {
-                log.warn("Invalid/Expired JWT token for path: {}", request.getURI().getPath());
+            try {
+                Claims claims = extractAllClaims(token);
+                String username = claims.getSubject();
+                String role = claims.get("role", String.class);
+                String userId = claims.get("userId", String.class);
+
+                ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                        .header("X-User-Name", username != null ? username : "")
+                        .header("X-User-Role", role != null ? role : "")
+                        .header("X-User-Id", userId != null ? userId : "")
+                        .build();
+
+                return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            } catch (Exception e) {
+                log.warn("Invalid JWT token for path: {}. Error: {}", path, e.getMessage());
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
-
-            String username = JwtUtils.extractUsername(token, jwtSecret);
-            String role = JwtUtils.extractRole(token, jwtSecret);
-            String userId = JwtUtils.extractUserId(token, jwtSecret);
-
-            ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                    .header("X-User-Name", username)
-                    .header("X-User-Role", role)
-                    .header("X-User-Id", userId)
-                    .build();
-
-            return chain.filter(exchange.mutate().request(modifiedRequest).build());
         };
     }
 
     private boolean isOpenEndpoint(String path) {
         return OPEN_API_ENDPOINTS.stream().anyMatch(path::startsWith);
+    }
+
+    private Claims extractAllClaims(String token) {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        Key key = Keys.hmacShaKeyFor(keyBytes);
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     public static class Config {
