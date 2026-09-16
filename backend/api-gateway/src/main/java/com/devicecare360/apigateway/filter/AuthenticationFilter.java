@@ -32,6 +32,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/auth/login",
             "/api/auth/refresh",
             "/api/auth/validate",
+            "/api/troubleshooting",
             "/v3/api-docs",
             "/swagger-ui"
     );
