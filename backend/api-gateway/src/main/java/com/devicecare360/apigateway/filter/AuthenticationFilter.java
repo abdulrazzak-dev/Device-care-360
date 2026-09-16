@@ -33,9 +33,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/auth/refresh",
             "/api/auth/validate",
             "/api/troubleshooting",
+            "/api/troubleshoot",
+            "/api/diagnose",
+            "/api/ai",
             "/api/devices",
+            "/api/repair-guides",
+            "/api/technicians",
             "/v3/api-docs",
-            "/swagger-ui"
+            "/swagger-ui",
+            "/actuator"
     );
 
     public AuthenticationFilter() {
@@ -48,14 +54,14 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
 
-            // 1. Immediately bypass authentication for OPTIONS (preflight), CorsUtils, and /api/auth/ endpoints
+            // 1. Immediately bypass authentication for OPTIONS (preflight), CorsUtils, and open endpoints
             if (request.getMethod() == HttpMethod.OPTIONS
                     || CorsUtils.isPreFlightRequest(request)
                     || (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path)))) {
                 return chain.filter(exchange);
             }
 
-            // 3. Authorization Header சரிபார்ப்பு
+            // 2. Authorization Header check
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 log.warn("Missing Authorization header for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);

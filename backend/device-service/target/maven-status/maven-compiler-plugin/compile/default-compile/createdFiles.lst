@@ -1,8 +1,8 @@
-com/devicecare360/device/client/AiTroubleshootingClient.class
-com/devicecare360/device/config/RabbitMQConfig.class
-com/devicecare360/device/document/UserDevice$UserDeviceBuilder.class
-com/devicecare360/device/DeviceServiceApplication.class
-com/devicecare360/device/service/DeviceService.class
-com/devicecare360/device/repository/UserDeviceRepository.class
-com/devicecare360/device/controller/DeviceController.class
-com/devicecare360/device/document/UserDevice.class
+com\devicecare360\device\document\UserDevice.class
+com\devicecare360\device\client\AiTroubleshootingClient.class
+com\devicecare360\device\document\UserDevice$UserDeviceBuilder.class
+com\devicecare360\device\service\DeviceService.class
+com\devicecare360\device\controller\DeviceController.class
+com\devicecare360\device\config\RabbitMQConfig.class
+com\devicecare360\device\DeviceServiceApplication.class
+com\devicecare360\device\repository\UserDeviceRepository.class

@@ -1,10 +1,10 @@
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/document/TroubleshootingLog.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/config/RabbitMQConfig.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/service/AiTroubleshootingService.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/AiTroubleshootingApplication.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/dto/TroubleshootingRequest.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/controller/AiTroubleshootingController.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/safety/SafetyEngine.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/service/GeminiClient.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/dto/TroubleshootingResponse.java
-/app/ai-troubleshooting-service/src/main/java/com/devicecare360/aitroubleshooting/repository/TroubleshootingLogRepository.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\controller\AiTroubleshootingController.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\dto\TroubleshootingResponse.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\document\TroubleshootingLog.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\service\AiTroubleshootingService.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\service\GeminiClient.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\repository\TroubleshootingLogRepository.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\AiTroubleshootingApplication.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\config\RabbitMQConfig.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\dto\TroubleshootingRequest.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\ai-troubleshooting-service\src\main\java\com\devicecare360\aitroubleshooting\safety\SafetyEngine.java

@@ -6,27 +6,6 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      globalcors:
-        add-to-simple-url-handler-mapping: true
-        cors-configurations:
-          '[/**]':
-            allowed-origin-patterns:
-              - "https://*.vercel.app"
-              - "https://device-care-360.vercel.app"
-              - "http://localhost:*"
-            allowed-methods:
-              - "GET"
-              - "POST"
-              - "PUT"
-              - "DELETE"
-              - "OPTIONS"
-              - "PATCH"
-            allowed-headers:
-              - "*"
-            exposed-headers:
-              - "*"
-            allow-credentials: true
-            max-age: 3600
       discovery:
         locator:
           enabled: true
@@ -56,9 +35,59 @@ spring:
           predicates:
             - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**
 
+        - id: repair-guide-service
+          uri: lb://REPAIR-GUIDE-SERVICE
+          predicates:
+            - Path=/api/repair-guides/**
+
+        - id: technician-service
+          uri: lb://TECHNICIAN-SERVICE
+          predicates:
+            - Path=/api/technicians/**
+
+        - id: booking-service
+          uri: lb://BOOKING-SERVICE
+          predicates:
+            - Path=/api/bookings/**
+          filters:
+            - AuthenticationFilter
+
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - AuthenticationFilter
+
+        - id: review-service
+          uri: lb://REVIEW-SERVICE
+          predicates:
+            - Path=/api/reviews/**
+
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - AuthenticationFilter
+
+        - id: admin-service
+          uri: lb://ADMIN-SERVICE
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - AuthenticationFilter
+
 eureka:
   client:
     serviceUrl:
       defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
   instance:
     prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web.cors: DEBUG
+    com.devicecare360.apigateway: DEBUG

@@ -1,8 +1,8 @@
-com/devicecare360/user/config/RabbitMQConfig.class
-com/devicecare360/user/controller/UserController.class
-com/devicecare360/user/document/UserProfile.class
-com/devicecare360/user/UserServiceApplication.class
-com/devicecare360/user/messaging/UserEventListener.class
-com/devicecare360/user/service/UserService.class
-com/devicecare360/user/document/UserProfile$UserProfileBuilder.class
-com/devicecare360/user/repository/UserProfileRepository.class
+com\devicecare360\user\config\RabbitMQConfig.class
+com\devicecare360\user\messaging\UserEventListener.class
+com\devicecare360\user\controller\UserController.class
+com\devicecare360\user\document\UserProfile$UserProfileBuilder.class
+com\devicecare360\user\UserServiceApplication.class
+com\devicecare360\user\service\UserService.class
+com\devicecare360\user\repository\UserProfileRepository.class
+com\devicecare360\user\document\UserProfile.class

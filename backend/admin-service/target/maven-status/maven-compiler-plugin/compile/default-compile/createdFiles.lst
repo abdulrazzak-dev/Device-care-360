@@ -1,7 +1,7 @@
-com/devicecare360/admin/service/AdminService.class
-com/devicecare360/admin/AdminServiceApplication.class
-com/devicecare360/admin/document/AdminAuditLog$AdminAuditLogBuilder.class
-com/devicecare360/admin/controller/AdminController.class
-com/devicecare360/admin/document/AdminAuditLog.class
-com/devicecare360/admin/client/TechnicianAdminClient.class
-com/devicecare360/admin/repository/AdminAuditLogRepository.class
+com\devicecare360\admin\repository\AdminAuditLogRepository.class
+com\devicecare360\admin\client\TechnicianAdminClient.class
+com\devicecare360\admin\controller\AdminController.class
+com\devicecare360\admin\document\AdminAuditLog$AdminAuditLogBuilder.class
+com\devicecare360\admin\service\AdminService.class
+com\devicecare360\admin\AdminServiceApplication.class
+com\devicecare360\admin\document\AdminAuditLog.class

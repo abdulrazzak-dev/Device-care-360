@@ -1,7 +1,7 @@
-/app/user-service/src/main/java/com/devicecare360/user/messaging/UserEventListener.java
-/app/user-service/src/main/java/com/devicecare360/user/UserServiceApplication.java
-/app/user-service/src/main/java/com/devicecare360/user/repository/UserProfileRepository.java
-/app/user-service/src/main/java/com/devicecare360/user/config/RabbitMQConfig.java
-/app/user-service/src/main/java/com/devicecare360/user/document/UserProfile.java
-/app/user-service/src/main/java/com/devicecare360/user/controller/UserController.java
-/app/user-service/src/main/java/com/devicecare360/user/service/UserService.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\messaging\UserEventListener.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\controller\UserController.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\document\UserProfile.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\repository\UserProfileRepository.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\config\RabbitMQConfig.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\service\UserService.java
+C:\Users\FSL\Desktop\git hub working file\Device-care-360\backend\user-service\src\main\java\com\devicecare360\user\UserServiceApplication.java
