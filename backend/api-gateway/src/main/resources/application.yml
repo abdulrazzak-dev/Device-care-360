@@ -10,10 +10,6 @@ spring:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowed-origins:
-              - "https://device-care-360.vercel.app"
-              - "http://localhost:5173"
-              - "http://localhost:3000"
             allowed-origin-patterns:
               - "https://*.vercel.app"
               - "https://device-care-360.vercel.app"
@@ -54,6 +50,11 @@ spring:
             - Path=/api/devices/**
           filters:
             - AuthenticationFilter
+
+        - id: ai-troubleshooting-service
+          uri: lb://AI-TROUBLESHOOTING-SERVICE
+          predicates:
+            - Path=/api/diagnose/**, /api/ai/**, /api/troubleshoot/**
 
 eureka:
   client:
