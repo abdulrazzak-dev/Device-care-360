@@ -6,8 +6,7 @@ spring:
     name: auth-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.stssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0
-  rabbitmq:
+      uri: mongodb+srv://devicecare_admin:admin124@cluster0.stssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
