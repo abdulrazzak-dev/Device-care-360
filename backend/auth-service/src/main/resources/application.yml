@@ -15,6 +15,7 @@ spring:
 eureka:
   instance:
     prefer-ip-address: true
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:localhost}
   client:
     serviceUrl:
       defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
