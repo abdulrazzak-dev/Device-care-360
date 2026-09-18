@@ -1,17 +1,26 @@
 server:
-  port: 8085
+  port: ${PORT:8085}
 
 spring:
   application:
     name: repair-guide-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/repairguide_db?retryWrites=true&w=majority&appName=Cluster0
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/repairguide_db?retryWrites=true&w=majority&appName=Cluster0}
 
 eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
+    instance-id: ${HOSTNAME:repair-guide-service}:${spring.application.name}:${server.port}
+    non-secure-port: ${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
-    serviceUrl:
-      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
 
 management:
   endpoints:

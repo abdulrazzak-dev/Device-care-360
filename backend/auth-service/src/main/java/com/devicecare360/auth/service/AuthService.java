@@ -30,6 +30,9 @@ public class AuthService {
     @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String jwtSecret;
 
+    @Value("${jwt.expiration:86400000}")
+    private long jwtExpiration;
+
     public AuthResponse register(RegisterRequest request) {
         if (authUserRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already taken: " + request.getUsername());
@@ -74,7 +77,7 @@ public class AuthService {
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.USER_REGISTERED_ROUTING_KEY, userEvent);
         }
 
-        String token = JwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole(), savedUser.getId(), jwtSecret);
+        String token = JwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole(), savedUser.getId(), jwtSecret, jwtExpiration);
 
         return AuthResponse.builder()
                 .token(token)
@@ -93,7 +96,7 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid username or password");
         }
 
-        String token = JwtUtils.generateToken(user.getUsername(), user.getRole(), user.getId(), jwtSecret);
+        String token = JwtUtils.generateToken(user.getUsername(), user.getRole(), user.getId(), jwtSecret, jwtExpiration);
 
         return AuthResponse.builder()
                 .token(token)

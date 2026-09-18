@@ -15,9 +15,9 @@ spring:
 
 eureka:
   instance:
-    prefer-ip-address: false
-    hostname: ${RAILWAY_PRIVATE_DOMAIN:auth-service.railway.internal}
-    instance-id: ${HOSTNAME:localhost}:${spring.application.name}:${server.port}
+    prefer-ip-address: true
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
+    instance-id: ${HOSTNAME:auth-service}:${spring.application.name}:${server.port}
     non-secure-port: ${server.port}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
@@ -29,6 +29,7 @@ eureka:
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 management:
   endpoints:

@@ -6,9 +6,9 @@ spring:
     name: ai-troubleshooting-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/troubleshoot_db?retryWrites=true&w=majority&appName=Cluster0
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/troubleshoot_db?retryWrites=true&w=majority&appName=Cluster0}
   rabbitmq:
-    host: ${RABBITMQ_HOST:rabbitmq.railway.internal}
+    host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
@@ -19,9 +19,9 @@ gemini:
 
 eureka:
   instance:
-    prefer-ip-address: false
-    hostname: ${RAILWAY_PRIVATE_DOMAIN:ai-troubleshooting-service.railway.internal}
-    instance-id: ${HOSTNAME:localhost}:${spring.application.name}:${server.port}
+    prefer-ip-address: true
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
+    instance-id: ${HOSTNAME:ai-troubleshooting-service}:${spring.application.name}:${server.port}
     non-secure-port: ${server.port}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30

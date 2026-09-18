@@ -1,12 +1,12 @@
 server:
-  port: 8083
+  port: ${PORT:8083}
 
 spring:
   application:
     name: device-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/device_db?retryWrites=true&w=majority&appName=Cluster0
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/device_db?retryWrites=true&w=majority&appName=Cluster0}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -14,9 +14,18 @@ spring:
     password: ${RABBITMQ_PASS:guest}
 
 eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
+    instance-id: ${HOSTNAME:device-service}:${spring.application.name}:${server.port}
+    non-secure-port: ${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
-    serviceUrl:
-      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
 
 management:
   endpoints:

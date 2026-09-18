@@ -111,4 +111,70 @@ class AuthenticationFilterTest {
 
         assertTrue(chainCalled.get());
     }
+
+    @Test
+    @DisplayName("Expired JWT token returns 401 UNAUTHORIZED")
+    void testProtectedEndpointWithExpiredToken() {
+        // Create expired token (-5000 ms)
+        String expiredToken = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret, -5000L);
+
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/users/profile")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredToken)
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertFalse(chainCalled.get(), "Chain filter should NOT be called for expired token");
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Invalid JWT signature returns 401 UNAUTHORIZED")
+    void testProtectedEndpointWithInvalidSignature() {
+        String wrongSecret = "999E635266556A586E3272357538782F413F4428472B4B6250645367566B5999";
+        String tokenWithWrongSig = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", wrongSecret);
+
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/users/profile")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenWithWrongSig)
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertFalse(chainCalled.get(), "Chain filter should NOT be called for invalid signature");
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Malformed JWT token returns 401 UNAUTHORIZED")
+    void testProtectedEndpointWithMalformedToken() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/users/profile")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer not.a.valid.jwt")
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertFalse(chainCalled.get(), "Chain filter should NOT be called for malformed token");
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
 }

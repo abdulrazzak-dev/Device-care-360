@@ -86,8 +86,28 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                log.warn("JWT token expired for path: {}. Expiration: {}", path, e.getClaims() != null ? e.getClaims().getExpiration() : "unknown");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            } catch (io.jsonwebtoken.security.SecurityException e) {
+                log.warn("Invalid JWT signature for path: {}", path);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            } catch (io.jsonwebtoken.MalformedJwtException e) {
+                log.warn("Malformed JWT token for path: {}", path);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            } catch (io.jsonwebtoken.UnsupportedJwtException e) {
+                log.warn("Unsupported JWT token for path: {}", path);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            } catch (IllegalArgumentException e) {
+                log.warn("JWT claims string is empty or invalid for path: {}", path);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
             } catch (Exception e) {
-                log.warn("Invalid JWT token for path: {}. Error: {}", path, e.getMessage());
+                log.warn("JWT validation failed for path: {}. Error: {}", path, e.getMessage());
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
