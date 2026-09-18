@@ -16,23 +16,28 @@ import java.util.function.Function;
 @Slf4j
 public class JwtUtils {
 
-    private static final String DEFAULT_SECRET = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
-    private static final long JWT_EXPIRATION_MS = 86400000; // 24 hours
+    public static final String DEFAULT_SECRET = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    public static final long JWT_EXPIRATION_MS = 86400000L; // 24 hours in milliseconds
 
     public static String generateToken(String username, String role, String userId, String secret) {
+        return generateToken(username, role, userId, secret, JWT_EXPIRATION_MS);
+    }
+
+    public static String generateToken(String username, String role, String userId, String secret, long expirationMs) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("userId", userId);
-        return createToken(claims, username, secret);
+        return createToken(claims, username, secret, expirationMs);
     }
 
-    private static String createToken(Map<String, Object> claims, String subject, String secret) {
+    private static String createToken(Map<String, Object> claims, String subject, String secret, long expirationMs) {
         Key key = getSigningKey(secret);
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -56,7 +61,7 @@ public class JwtUtils {
         return claimsResolver.apply(claims);
     }
 
-    private static Claims extractAllClaims(String token, String secret) {
+    public static Claims extractAllClaims(String token, String secret) {
         Key key = getSigningKey(secret);
         return Jwts.parserBuilder()
                 .setSigningKey(key)
@@ -75,15 +80,15 @@ public class JwtUtils {
         }
     }
 
-    private static boolean isTokenExpired(String token, String secret) {
+    public static boolean isTokenExpired(String token, String secret) {
         return extractExpiration(token, secret).before(new Date());
     }
 
-    private static Date extractExpiration(String token, String secret) {
+    public static Date extractExpiration(String token, String secret) {
         return extractClaim(token, secret, Claims::getExpiration);
     }
 
-    private static Key getSigningKey(String secret) {
+    public static Key getSigningKey(String secret) {
         String effectiveSecret = (secret != null && !secret.isBlank()) ? secret : DEFAULT_SECRET;
         byte[] keyBytes = effectiveSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);

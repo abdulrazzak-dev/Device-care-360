@@ -1,9 +1,6 @@
 package com.devicecare360.apigateway.filter;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import com.devicecare360.shared.security.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +15,6 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.security.Key;
-import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -97,15 +91,7 @@ class AuthenticationFilterTest {
     @Test
     @DisplayName("Protected endpoint with valid JWT token extracts claims and passes to downstream")
     void testProtectedEndpointWithValidToken() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        Key key = Keys.hmacShaKeyFor(keyBytes);
-        String token = Jwts.builder()
-                .setSubject("testuser")
-                .addClaims(Map.of("role", "ROLE_USER", "userId", "user-123"))
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        String token = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret);
 
         MockServerHttpRequest request = MockServerHttpRequest
                 .get("/api/users/profile")

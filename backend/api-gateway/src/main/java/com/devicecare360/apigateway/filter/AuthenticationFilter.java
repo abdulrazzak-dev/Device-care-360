@@ -1,9 +1,7 @@
 package com.devicecare360.apigateway.filter;
 
+import com.devicecare360.shared.security.JwtUtils;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +14,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.reactive.CorsUtils;
 
-import java.security.Key;
 import java.util.List;
 
 @Component
@@ -77,7 +74,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             String token = authHeader.substring(7);
             try {
-                Claims claims = extractAllClaims(token);
+                Claims claims = JwtUtils.extractAllClaims(token, jwtSecret);
                 String username = claims.getSubject();
                 String role = claims.get("role", String.class);
                 String userId = claims.get("userId", String.class);
@@ -99,16 +96,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
     private boolean isOpenEndpoint(String path) {
         return OPEN_API_ENDPOINTS.stream().anyMatch(path::startsWith);
-    }
-
-    private Claims extractAllClaims(String token) {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        Key key = Keys.hmacShaKeyFor(keyBytes);
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
     }
 
     public static class Config {
