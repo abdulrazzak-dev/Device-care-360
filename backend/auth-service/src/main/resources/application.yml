@@ -6,7 +6,8 @@ spring:
     name: auth-service
   data:
     mongodb:
-      uri: mongodb+srv://devicecare_admin:admin124@cluster0.stssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0}
+  rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
@@ -16,6 +17,9 @@ eureka:
   instance:
     prefer-ip-address: true
     hostname: ${RAILWAY_PRIVATE_DOMAIN:localhost}
+    instance-id: ${HOSTNAME:localhost}:${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   client:
     serviceUrl:
       defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
