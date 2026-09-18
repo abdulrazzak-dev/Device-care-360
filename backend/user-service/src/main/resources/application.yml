@@ -14,11 +14,18 @@ spring:
     password: ${RABBITMQ_PASS:guest}
 
 eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:user-service.railway.internal}
+    instance-id: ${HOSTNAME:localhost}:${spring.application.name}:${server.port}
+    non-secure-port: ${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
 
 management:
   endpoints:

@@ -80,10 +80,14 @@ spring:
 
 eureka:
   client:
-    serviceUrl:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
       defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: ${RAILWAY_PRIVATE_DOMAIN:api-gateway.railway.internal}
+    instance-id: ${HOSTNAME:localhost}:${spring.application.name}:${server.port}
 
 logging:
   level:
