@@ -115,8 +115,8 @@ class AuthenticationFilterTest {
     @Test
     @DisplayName("Expired JWT token returns 401 UNAUTHORIZED")
     void testProtectedEndpointWithExpiredToken() {
-        // Create expired token (-5000 ms)
-        String expiredToken = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret, -5000L);
+        // Create expired token (-120000 ms = 2 minutes in the past)
+        String expiredToken = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret, -120000L);
 
         MockServerHttpRequest request = MockServerHttpRequest
                 .get("/api/users/profile")

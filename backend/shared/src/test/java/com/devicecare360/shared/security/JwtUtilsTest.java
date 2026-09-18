@@ -76,8 +76,8 @@ class JwtUtilsTest {
     @Test
     @DisplayName("Expired token validation returns false")
     void testExpiredTokenValidation() {
-        // Create an already-expired token (-5000 ms)
-        String expiredToken = JwtUtils.generateToken("user1", "USER", "uid1", SECRET, -5000L);
+        // Create an already-expired token (-120000 ms = 2 minutes in the past)
+        String expiredToken = JwtUtils.generateToken("user1", "USER", "uid1", SECRET, -120000L);
 
         assertFalse(JwtUtils.validateToken(expiredToken, SECRET));
     }
