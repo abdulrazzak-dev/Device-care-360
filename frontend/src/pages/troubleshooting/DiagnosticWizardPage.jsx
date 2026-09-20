@@ -94,11 +94,12 @@ const DiagnosticWizardPage = () => {
             {(categories.length > 0 ? categories : ['Smartphone', 'Laptop', 'Television', 'Refrigerator', 'Washing Machine', 'Air Conditioner', 'Printer', 'Computer', 'Tablet', 'Audio Device', 'Other']).map((cat) => (
               <div className="col-6 col-sm-4 col-md-3" key={cat}>
                 <button
-                  className={`btn btn-outline-dark w-100 p-2.5 p-sm-3 rounded-3 text-start card-hover h-100 d-flex flex-column justify-content-between ${selectedCategory === cat ? 'border-primary bg-primary bg-opacity-10' : ''}`}
+                  type="button"
+                  className={`btn category-card w-100 p-2.5 p-sm-3 rounded-3 text-start card-hover h-100 d-flex flex-column justify-content-between ${selectedCategory === cat ? 'selected active' : ''}`}
                   onClick={() => handleSelectCategory(cat)}
                 >
-                  <Cpu size={24} className="text-primary mb-2 flex-shrink-0" />
-                  <div className="fw-bold small text-dark text-break">{cat}</div>
+                  <Cpu size={24} className="category-icon mb-2 flex-shrink-0" />
+                  <div className="fw-bold small category-title text-break">{cat}</div>
                 </button>
               </div>
             ))}
