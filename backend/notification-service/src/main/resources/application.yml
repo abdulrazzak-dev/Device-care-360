@@ -1,34 +1,63 @@
 server:
   port: ${PORT:8090}
+  address: 0.0.0.0
 
 spring:
   application:
     name: notification-service
-  data:
-    mongodb:
-      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/notification_db?retryWrites=true&w=majority&appName=Cluster0}
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
+    connection-timeout: 5000ms
+    listener:
+      simple:
+        missing-queues-fatal: false
+        auto-startup: true
+        retry:
+          enabled: true
+          initial-interval: 3000ms
+          max-attempts: 5
+          multiplier: 2.0
+          max-interval: 10000ms
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/notification_db?retryWrites=true&w=majority&appName=Cluster0}
 
 eureka:
-  instance:
-    prefer-ip-address: true
-    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
-    instance-id: ${HOSTNAME:notification-service}:${spring.application.name}:${server.port}
-    non-secure-port: ${server.port}
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL:http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/}
+
+  instance:
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:false}
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}}
+    instance-id: ${EUREKA_INSTANCE_HOSTNAME:${HOSTNAME:notification-service}}:${spring.application.name}
+
+    non-secure-port-enabled: false
+    secure-port-enabled: true
+    secure-port: 443
+
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+    home-page-url: https://${EUREKA_INSTANCE_HOSTNAME:${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}}/
+    status-page-url: https://${EUREKA_INSTANCE_HOSTNAME:${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}}/actuator/health
+    health-check-url: https://${EUREKA_INSTANCE_HOSTNAME:${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}}/actuator/health
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    rabbit:
+      enabled: false
