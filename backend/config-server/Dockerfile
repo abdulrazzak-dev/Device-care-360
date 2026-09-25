@@ -7,25 +7,24 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/config-server/pom.xml backend/config-server/pom.xml
+COPY config-server/pom.xml config-server/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/config-server \
+    -pl config-server \
     -am
 
 # Copy source code
-COPY backend/config-server/src backend/config-server/src
+COPY config-server/src config-server/src
 
 # Build config-server
 RUN mvn -B -ntp clean package \
-    -pl backend/config-server \
+    -pl config-server \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/config-server/target/*.jar /tmp/app.jar
+RUN cp config-server/target/*.jar /tmp/app.jar
 
 
 # ============================

@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/admin-service/pom.xml backend/admin-service/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY admin-service/pom.xml admin-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/admin-service \
+    -pl admin-service \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/admin-service/src backend/admin-service/src
+COPY shared/src shared/src
+COPY admin-service/src admin-service/src
 
 # Build shared library and admin-service
 RUN mvn -B -ntp clean package \
-    -pl backend/admin-service \
+    -pl admin-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/admin-service/target/*.jar /tmp/app.jar
+RUN cp admin-service/target/*.jar /tmp/app.jar
 
 
 # ============================

@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/api-gateway/pom.xml backend/api-gateway/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY api-gateway/pom.xml api-gateway/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/api-gateway \
+    -pl api-gateway \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/api-gateway/src backend/api-gateway/src
+COPY shared/src shared/src
+COPY api-gateway/src api-gateway/src
 
 # Build shared library and api-gateway
 RUN mvn -B -ntp clean package \
-    -pl backend/api-gateway \
+    -pl api-gateway \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/api-gateway/target/*.jar /tmp/app.jar
+RUN cp api-gateway/target/*.jar /tmp/app.jar
 
 
 # ============================

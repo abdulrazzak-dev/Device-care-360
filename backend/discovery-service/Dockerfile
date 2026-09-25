@@ -7,25 +7,24 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/discovery-service/pom.xml backend/discovery-service/pom.xml
+COPY discovery-service/pom.xml discovery-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/discovery-service \
+    -pl discovery-service \
     -am
 
 # Copy source code
-COPY backend/discovery-service/src backend/discovery-service/src
+COPY discovery-service/src discovery-service/src
 
 # Build discovery-service
 RUN mvn -B -ntp clean package \
-    -pl backend/discovery-service \
+    -pl discovery-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/discovery-service/target/*.jar /tmp/app.jar
+RUN cp discovery-service/target/*.jar /tmp/app.jar
 
 
 # ============================

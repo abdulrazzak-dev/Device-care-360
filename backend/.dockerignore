@@ -1,0 +1,18 @@
+.git
+.github
+.idea
+.vscode
+.mvn
+
+**/target
+**/.idea
+**/*.iml
+
+# Logs
+*.log
+hs_err_pid*.log
+
+# OS / Temporary files
+.DS_Store
+Thumbs.db
+*.tmp

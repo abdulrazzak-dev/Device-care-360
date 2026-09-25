@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/notification-service/pom.xml backend/notification-service/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY notification-service/pom.xml notification-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/notification-service \
+    -pl notification-service \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/notification-service/src backend/notification-service/src
+COPY shared/src shared/src
+COPY notification-service/src notification-service/src
 
 # Build shared library and notification-service
 RUN mvn -B -ntp clean package \
-    -pl backend/notification-service \
+    -pl notification-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/notification-service/target/*.jar /tmp/app.jar
+RUN cp notification-service/target/*.jar /tmp/app.jar
 
 
 # ============================

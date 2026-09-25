@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/booking-service/pom.xml backend/booking-service/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY booking-service/pom.xml booking-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/booking-service \
+    -pl booking-service \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/booking-service/src backend/booking-service/src
+COPY shared/src shared/src
+COPY booking-service/src booking-service/src
 
 # Build shared library and booking-service
 RUN mvn -B -ntp clean package \
-    -pl backend/booking-service \
+    -pl booking-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/booking-service/target/*.jar /tmp/app.jar
+RUN cp booking-service/target/*.jar /tmp/app.jar
 
 
 # ============================

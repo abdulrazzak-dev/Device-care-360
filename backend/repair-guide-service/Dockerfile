@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/repair-guide-service/pom.xml backend/repair-guide-service/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY repair-guide-service/pom.xml repair-guide-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/repair-guide-service \
+    -pl repair-guide-service \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/repair-guide-service/src backend/repair-guide-service/src
+COPY shared/src shared/src
+COPY repair-guide-service/src repair-guide-service/src
 
 # Build shared library and repair-guide-service
 RUN mvn -B -ntp clean package \
-    -pl backend/repair-guide-service \
+    -pl repair-guide-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/repair-guide-service/target/*.jar /tmp/app.jar
+RUN cp repair-guide-service/target/*.jar /tmp/app.jar
 
 
 # ============================

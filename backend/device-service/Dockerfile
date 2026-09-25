@@ -7,27 +7,26 @@ WORKDIR /workspace
 
 # Copy POM descriptors for dependency caching
 COPY pom.xml .
-COPY backend/pom.xml backend/pom.xml
-COPY backend/shared/pom.xml backend/shared/pom.xml
-COPY backend/device-service/pom.xml backend/device-service/pom.xml
+COPY shared/pom.xml shared/pom.xml
+COPY device-service/pom.xml device-service/pom.xml
 
 # Download dependencies offline (cached layer)
 RUN mvn -B -ntp dependency:go-offline \
-    -pl backend/device-service \
+    -pl device-service \
     -am
 
 # Copy source code
-COPY backend/shared/src backend/shared/src
-COPY backend/device-service/src backend/device-service/src
+COPY shared/src shared/src
+COPY device-service/src device-service/src
 
 # Build shared library and device-service
 RUN mvn -B -ntp clean package \
-    -pl backend/device-service \
+    -pl device-service \
     -am \
     -DskipTests
 
 # Copy generated executable fat JAR to temporary location
-RUN cp backend/device-service/target/*.jar /tmp/app.jar
+RUN cp device-service/target/*.jar /tmp/app.jar
 
 
 # ============================
