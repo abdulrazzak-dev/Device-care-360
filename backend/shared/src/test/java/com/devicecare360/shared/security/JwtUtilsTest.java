@@ -65,6 +65,22 @@ class JwtUtilsTest {
     }
 
     @Test
+    @DisplayName("Secret normalization: secrets with whitespace, newlines, and quotes produce identical key and valid token")
+    void testSecretNormalizationWithWhitespaceAndQuotes() {
+        String secretWithWhitespaceAndQuotes = "  \"" + SECRET + "\"\n\r  ";
+        String token = JwtUtils.generateToken("user1", "USER", "uid1", secretWithWhitespaceAndQuotes);
+
+        assertNotNull(token);
+        // Should validate with clean secret
+        assertTrue(JwtUtils.validateToken(token, SECRET));
+        // Should validate with dirty secret
+        assertTrue(JwtUtils.validateToken(token, secretWithWhitespaceAndQuotes));
+
+        // Fingerprints must match
+        assertEquals(JwtUtils.getSecretFingerprint(SECRET), JwtUtils.getSecretFingerprint(secretWithWhitespaceAndQuotes));
+    }
+
+    @Test
     @DisplayName("Token validation fails for tampered or invalid secret")
     void testValidationFailsWithWrongSecret() {
         String token = JwtUtils.generateToken("user1", "USER", "uid1", SECRET);
@@ -80,5 +96,22 @@ class JwtUtilsTest {
         String expiredToken = JwtUtils.generateToken("user1", "USER", "uid1", SECRET, -120000L);
 
         assertFalse(JwtUtils.validateToken(expiredToken, SECRET));
+    }
+
+    @Test
+    @DisplayName("Null, blank, or too short secret throws IllegalArgumentException")
+    void testInvalidSecretsThrowException() {
+        assertThrows(IllegalArgumentException.class, () -> JwtUtils.sanitizeSecret(null));
+        assertThrows(IllegalArgumentException.class, () -> JwtUtils.sanitizeSecret("   "));
+        assertThrows(IllegalArgumentException.class, () -> JwtUtils.sanitizeSecret("short-secret"));
+    }
+
+    @Test
+    @DisplayName("SHA-256 fingerprint produces deterministic 64-char hex string")
+    void testSecretFingerprint() {
+        String fp = JwtUtils.getSecretFingerprint(SECRET);
+        assertNotNull(fp);
+        assertEquals(64, fp.length());
+        assertEquals(fp, JwtUtils.getSecretFingerprint(SECRET));
     }
 }

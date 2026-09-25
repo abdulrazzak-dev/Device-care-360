@@ -9,6 +9,7 @@ import com.devicecare360.auth.repository.AuthUserRepository;
 import com.devicecare360.shared.event.TechnicianRegisteredEvent;
 import com.devicecare360.shared.event.UserRegisteredEvent;
 import com.devicecare360.shared.security.JwtUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -32,6 +33,14 @@ public class AuthService {
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
+
+    @PostConstruct
+    public void init() {
+        String cleanSecret = JwtUtils.sanitizeSecret(jwtSecret);
+        String fingerprint = JwtUtils.getSecretFingerprint(cleanSecret);
+        log.info("AuthService JWT Security configured: algorithm={}, secretLength={}, sha256Fingerprint={}",
+                JwtUtils.SIGNATURE_ALGORITHM, cleanSecret.length(), fingerprint);
+    }
 
     public AuthResponse register(RegisterRequest request) {
         if (authUserRepository.existsByUsername(request.getUsername())) {

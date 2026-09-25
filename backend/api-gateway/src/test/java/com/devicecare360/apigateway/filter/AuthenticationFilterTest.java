@@ -29,6 +29,7 @@ class AuthenticationFilterTest {
     void setUp() {
         authenticationFilter = new AuthenticationFilter();
         ReflectionTestUtils.setField(authenticationFilter, "jwtSecret", secret);
+        authenticationFilter.init();
         gatewayFilter = authenticationFilter.apply(new AuthenticationFilter.Config());
     }
 
@@ -96,6 +97,30 @@ class AuthenticationFilterTest {
         MockServerHttpRequest request = MockServerHttpRequest
                 .get("/api/users/profile")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            assertEquals("testuser", ex.getRequest().getHeaders().getFirst("X-User-Name"));
+            assertEquals("ROLE_USER", ex.getRequest().getHeaders().getFirst("X-User-Role"));
+            assertEquals("user-123", ex.getRequest().getHeaders().getFirst("X-User-Id"));
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertTrue(chainCalled.get());
+    }
+
+    @Test
+    @DisplayName("Protected endpoint with Bearer token containing quotes or extra whitespace passes validation")
+    void testProtectedEndpointWithQuotedToken() {
+        String token = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret);
+
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/notifications")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer   \"" + token + "\"  ")
                 .build();
 
         MockServerWebExchange exchange = MockServerWebExchange.from(request);

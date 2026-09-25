@@ -2,6 +2,7 @@ package com.devicecare360.apigateway.filter;
 
 import com.devicecare360.shared.security.JwtUtils;
 import io.jsonwebtoken.Claims;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,14 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         super(Config.class);
     }
 
+    @PostConstruct
+    public void init() {
+        String cleanSecret = JwtUtils.sanitizeSecret(jwtSecret);
+        String fingerprint = JwtUtils.getSecretFingerprint(cleanSecret);
+        log.info("API-Gateway JWT Security configured: algorithm={}, secretLength={}, sha256Fingerprint={}",
+                JwtUtils.SIGNATURE_ALGORITHM, cleanSecret.length(), fingerprint);
+    }
+
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
@@ -66,13 +75,18 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             }
 
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (authHeader == null || !authHeader.trim().startsWith("Bearer ")) {
                 log.warn("Invalid Authorization header format for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
-            String token = authHeader.substring(7);
+            String token = authHeader.trim().substring(7).trim();
+            if ((token.startsWith("\"") && token.endsWith("\"") && token.length() >= 2) ||
+                (token.startsWith("'") && token.endsWith("'") && token.length() >= 2)) {
+                token = token.substring(1, token.length() - 1).trim();
+            }
+
             try {
                 Claims claims = JwtUtils.extractAllClaims(token, jwtSecret);
                 String username = claims.getSubject();
