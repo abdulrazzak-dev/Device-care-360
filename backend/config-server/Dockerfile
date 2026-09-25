@@ -5,25 +5,16 @@ FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Copy POM descriptors for dependency caching
+# 1. Install parent POM non-recursively (-N) so child modules are not scanned
 COPY pom.xml .
+RUN mvn -B -ntp install -N
+
+# 2. Build config-server
 COPY config-server/pom.xml config-server/pom.xml
-
-# Download dependencies offline (cached layer)
-RUN mvn -B -ntp dependency:go-offline \
-    -pl config-server \
-    -am
-
-# Copy source code
 COPY config-server/src config-server/src
+RUN mvn -B -ntp -f config-server/pom.xml clean package -DskipTests
 
-# Build config-server
-RUN mvn -B -ntp clean package \
-    -pl config-server \
-    -am \
-    -DskipTests
-
-# Copy generated executable fat JAR to temporary location
+# 3. Stage executable fat JAR (avoiding hardcoded version names)
 RUN cp config-server/target/*.jar /tmp/app.jar
 
 
@@ -48,3 +39,4 @@ USER spring
 EXPOSE 8888
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
+

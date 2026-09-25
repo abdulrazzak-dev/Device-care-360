@@ -5,27 +5,25 @@ FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Copy POM descriptors for dependency caching
+# 1. Copy POM files
 COPY pom.xml .
 COPY shared/pom.xml shared/pom.xml
 COPY device-service/pom.xml device-service/pom.xml
 
-# Download dependencies offline (cached layer)
-RUN mvn -B -ntp dependency:go-offline \
-    -pl device-service \
-    -am
+# 2. Install parent POM non-recursively into local Maven cache (~/.m2)
+RUN mvn -B -ntp install -N
 
-# Copy source code
+# 3. Copy source code
 COPY shared/src shared/src
 COPY device-service/src device-service/src
 
-# Build shared library and device-service
-RUN mvn -B -ntp clean package \
-    -pl device-service \
-    -am \
-    -DskipTests
+# 4. Build and install shared library into local cache
+RUN mvn -B -ntp -f shared/pom.xml clean install -DskipTests
 
-# Copy generated executable fat JAR to temporary location
+# 5. Build and package the microservice
+RUN mvn -B -ntp -f device-service/pom.xml clean package -DskipTests
+
+# 6. Copy generated executable fat JAR to temporary location
 RUN cp device-service/target/*.jar /tmp/app.jar
 
 

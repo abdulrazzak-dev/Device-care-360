@@ -5,27 +5,25 @@ FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Copy POM descriptors for dependency caching
+# 1. Copy POM files
 COPY pom.xml .
 COPY shared/pom.xml shared/pom.xml
 COPY review-service/pom.xml review-service/pom.xml
 
-# Download dependencies offline (cached layer)
-RUN mvn -B -ntp dependency:go-offline \
-    -pl review-service \
-    -am
+# 2. Install parent POM non-recursively into local Maven cache (~/.m2)
+RUN mvn -B -ntp install -N
 
-# Copy source code
+# 3. Copy source code
 COPY shared/src shared/src
 COPY review-service/src review-service/src
 
-# Build shared library and review-service
-RUN mvn -B -ntp clean package \
-    -pl review-service \
-    -am \
-    -DskipTests
+# 4. Build and install shared library into local cache
+RUN mvn -B -ntp -f shared/pom.xml clean install -DskipTests
 
-# Copy generated executable fat JAR to temporary location
+# 5. Build and package the microservice
+RUN mvn -B -ntp -f review-service/pom.xml clean package -DskipTests
+
+# 6. Copy generated executable fat JAR to temporary location
 RUN cp review-service/target/*.jar /tmp/app.jar
 
 

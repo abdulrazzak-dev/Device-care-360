@@ -5,27 +5,26 @@ FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Copy POM descriptors for dependency caching
+# 1. Copy POM files
 COPY pom.xml .
 COPY shared/pom.xml shared/pom.xml
 COPY ai-troubleshooting-service/pom.xml ai-troubleshooting-service/pom.xml
 
-# Download dependencies offline (cached layer)
-RUN mvn -B -ntp dependency:go-offline \
-    -pl ai-troubleshooting-service \
-    -am
+# 2. Install parent POM non-recursively into local Maven cache (~/.m2)
+# -N (--non-recursive) prevents Maven from scanning uncopied child <modules>
+RUN mvn -B -ntp install -N
 
-# Copy source code
+# 3. Copy source code
 COPY shared/src shared/src
 COPY ai-troubleshooting-service/src ai-troubleshooting-service/src
 
-# Build shared library and ai-troubleshooting-service
-RUN mvn -B -ntp clean package \
-    -pl ai-troubleshooting-service \
-    -am \
-    -DskipTests
+# 4. Build and install shared library into local cache
+RUN mvn -B -ntp -f shared/pom.xml clean install -DskipTests
 
-# Copy generated executable fat JAR to temporary location
+# 5. Build and package the microservice
+RUN mvn -B -ntp -f ai-troubleshooting-service/pom.xml clean package -DskipTests
+
+# 6. Copy generated executable fat JAR to temporary location
 RUN cp ai-troubleshooting-service/target/*.jar /tmp/app.jar
 
 

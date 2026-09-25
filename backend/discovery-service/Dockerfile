@@ -5,25 +5,16 @@ FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Copy POM descriptors for dependency caching
+# 1. Install parent POM non-recursively (-N) so child modules are not scanned
 COPY pom.xml .
+RUN mvn -B -ntp install -N
+
+# 2. Build discovery-service
 COPY discovery-service/pom.xml discovery-service/pom.xml
-
-# Download dependencies offline (cached layer)
-RUN mvn -B -ntp dependency:go-offline \
-    -pl discovery-service \
-    -am
-
-# Copy source code
 COPY discovery-service/src discovery-service/src
+RUN mvn -B -ntp -f discovery-service/pom.xml clean package -DskipTests
 
-# Build discovery-service
-RUN mvn -B -ntp clean package \
-    -pl discovery-service \
-    -am \
-    -DskipTests
-
-# Copy generated executable fat JAR to temporary location
+# 3. Stage executable fat JAR (avoiding hardcoded version names)
 RUN cp discovery-service/target/*.jar /tmp/app.jar
 
 
@@ -48,3 +39,4 @@ USER spring
 EXPOSE 8761
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
