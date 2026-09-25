@@ -1,0 +1,27 @@
+.git
+.github
+.idea
+.vscode
+.mvn
+
+**/target
+**/.idea
+**/*.iml
+
+# Logs
+*.log
+hs_err_pid*.log
+
+# Node / Frontend assets
+node_modules
+**/node_modules
+frontend/dist
+frontend/.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Temporary files
+.DS_Store
+Thumbs.db
+*.tmp
