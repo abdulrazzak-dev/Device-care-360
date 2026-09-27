@@ -17,14 +17,14 @@ spring:
             - Path=/api/auth/**
 
         - id: user-service
-          uri: lb://USER-SERVICE
+          uri: https://device-care-360-user-service.onrender.com:8082
           predicates:
             - Path=/api/users/**
           filters:
             - AuthenticationFilter
 
         - id: device-service
-          uri: lb://DEVICE-SERVICE
+          uri: https://device-care-360-device-service.onrender.com:8083
           predicates:
             - Path=/api/devices/**
           filters:
@@ -41,38 +41,38 @@ spring:
             - Path=/api/repair-guides/**
 
         - id: technician-service
-          uri: lb://TECHNICIAN-SERVICE
+          uri: https://device-care-360-technician-service.onrender.com:8086
           predicates:
             - Path=/api/technicians/**
 
         - id: booking-service
-          uri: lb://BOOKING-SERVICE
+          uri: https://device-care-360-booking-service.onrender.com:8087
           predicates:
             - Path=/api/bookings/**
           filters:
             - AuthenticationFilter
 
         - id: payment-service
-          uri: lb://PAYMENT-SERVICE
+          uri: https://device-care-360-payment-service.onrender.com:8088
           predicates:
             - Path=/api/payments/**
           filters:
             - AuthenticationFilter
 
         - id: review-service
-          uri: lb://REVIEW-SERVICE
+          uri: https://device-care-360-review-service.onrender.com:8089
           predicates:
             - Path=/api/reviews/**
 
         - id: notification-service
-          uri: lb://NOTIFICATION-SERVICE
+          uri: https://device-care-360-notification-service.onrender.com:8090
           predicates:
             - Path=/api/notifications/**
           filters:
             - AuthenticationFilter
 
         - id: admin-service
-          uri: lb://ADMIN-SERVICE
+          uri: https://device-care-360-admin-service.onrender.com:8091
           predicates:
             - Path=/api/admin/**
           filters:
