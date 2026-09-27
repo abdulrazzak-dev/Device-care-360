@@ -12,7 +12,7 @@ spring:
           lower-case-service-id: true
       routes:
         - id: auth-service
-          uri: lb://AUTH-SERVICE
+          uri: http://auth-service.railway.internal:8080
           predicates:
             - Path=/api/auth/**
 
