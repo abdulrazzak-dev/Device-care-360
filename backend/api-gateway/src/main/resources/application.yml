@@ -36,7 +36,7 @@ spring:
             - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**
 
         - id: repair-guide-service
-          uri: lb://REPAIR-GUIDE-SERVICE
+          uri: https://device-care-360-repair-guide-service.onrender.com:8085
           predicates:
             - Path=/api/repair-guides/**
 
