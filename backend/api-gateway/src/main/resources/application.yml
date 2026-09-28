@@ -24,7 +24,7 @@ spring:
             - AuthenticationFilter
 
         - id: device-service
-          uri: https://device-care-360-device-service.onrender.com:8083
+          uri: https://device-care-360-device-service.onrender.com
           predicates:
             - Path=/api/devices/**
           filters:
