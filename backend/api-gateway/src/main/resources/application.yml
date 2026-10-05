@@ -12,7 +12,7 @@ spring:
           lower-case-service-id: true
       routes:
         - id: auth-service
-          uri: http://auth-service.railway.internal:8080
+          uri: https://device-care-360-auth-service.onrender.com:8080
           predicates:
             - Path=/api/auth/**
 
@@ -31,7 +31,7 @@ spring:
             - AuthenticationFilter
 
         - id: ai-troubleshooting-service
-          uri: http://ai-troubleshooting-service.railway.internal:8084
+          uri: https://device-care-360-ai-troubleshooting-service.onrender.com:8084
           predicates:
             - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**
 
