@@ -12,12 +12,12 @@ spring:
           lower-case-service-id: true
       routes:
         - id: auth-service
-          uri: https://device-care-360-auth-service.onrender.com:8080
+          uri: https://device-care-360-auth-service.onrender.com
           predicates:
             - Path=/api/auth/**
 
         - id: user-service
-          uri: https://device-care-360-user-service.onrender.com:8082
+          uri: https://device-care-360-user-service.onrender.com
           predicates:
             - Path=/api/users/**
           filters:
@@ -49,48 +49,48 @@ spring:
             - AuthenticationFilter
 
         - id: ai-troubleshooting-service
-          uri: https://device-care-360-ai-troubleshooting-service.onrender.com:8084
+          uri: https://device-care-360-ai-troubleshooting-service.onrender.com
           predicates:
-            - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**
+            - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**, /api/analyze/**
 
         - id: repair-guide-service
-          uri: https://device-care-360-repair-guide-service.onrender.com:8085
+          uri: https://device-care-360-repair-guide-service.onrender.com
           predicates:
             - Path=/api/repair-guides/**
 
         - id: technician-service
-          uri: https://device-care-360-technician-service.onrender.com:8086
+          uri: https://device-care-360-technician-service.onrender.com
           predicates:
             - Path=/api/technicians/**
 
         - id: booking-service
-          uri: https://device-care-360-booking-service.onrender.com:8087
+          uri: https://device-care-360-booking-service.onrender.com
           predicates:
             - Path=/api/bookings/**
           filters:
             - AuthenticationFilter
 
         - id: payment-service
-          uri: https://device-care-360-payment-service.onrender.com:8088
+          uri: https://device-care-360-payment-service.onrender.com
           predicates:
             - Path=/api/payments/**
           filters:
             - AuthenticationFilter
 
         - id: review-service
-          uri: https://device-care-360-review-service.onrender.com:8089
+          uri: https://device-care-360-review-service.onrender.com
           predicates:
             - Path=/api/reviews/**
 
         - id: notification-service
-          uri: https://device-care-360-notification-service.onrender.com:8090
+          uri: https://device-care-360-notification-service.onrender.com
           predicates:
             - Path=/api/notifications/**
           filters:
             - AuthenticationFilter
 
         - id: admin-service
-          uri: https://device-care-360-admin-service.onrender.com:8091
+          uri: https://device-care-360-admin-service.onrender.com
           predicates:
             - Path=/api/admin/**
           filters:
