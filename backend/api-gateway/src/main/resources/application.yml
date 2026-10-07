@@ -23,7 +23,25 @@ spring:
           filters:
             - AuthenticationFilter
 
-        - id: device-service
+        - id: device-brands-public
+          uri: https://device-care-360-device-service.onrender.com
+          predicates:
+            - Path=/api/devices/brands
+            - Method=GET
+
+        - id: device-issues-public
+          uri: https://device-care-360-device-service.onrender.com
+          predicates:
+            - Path=/api/devices/issues
+            - Method=GET
+
+        - id: device-categories-public
+          uri: https://device-care-360-device-service.onrender.com
+          predicates:
+            - Path=/api/devices/categories
+            - Method=GET
+
+        - id: device-service-protected
           uri: https://device-care-360-device-service.onrender.com
           predicates:
             - Path=/api/devices/**

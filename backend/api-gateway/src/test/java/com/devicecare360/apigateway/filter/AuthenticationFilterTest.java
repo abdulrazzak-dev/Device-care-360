@@ -202,4 +202,104 @@ class AuthenticationFilterTest {
         assertFalse(chainCalled.get(), "Chain filter should NOT be called for malformed token");
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
     }
+
+    @Test
+    @DisplayName("Public endpoint /api/devices/brands?category=Smartphone bypasses authentication filter")
+    void testPublicDeviceBrandsEndpointBypassesAuth() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/devices/brands?category=Smartphone")
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertTrue(chainCalled.get(), "Chain filter should be called for public device brands endpoint");
+        assertNotEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Public endpoint /api/devices/issues?category=Smartphone bypasses authentication filter")
+    void testPublicDeviceIssuesEndpointBypassesAuth() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/devices/issues?category=Smartphone")
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertTrue(chainCalled.get(), "Chain filter should be called for public device issues endpoint");
+        assertNotEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Public endpoint /api/devices/categories bypasses authentication filter")
+    void testPublicDeviceCategoriesEndpointBypassesAuth() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/devices/categories")
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertTrue(chainCalled.get(), "Chain filter should be called for public device categories endpoint");
+        assertNotEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Protected device endpoint /api/devices/user/123 without token returns 401 UNAUTHORIZED")
+    void testProtectedDeviceEndpointWithoutToken() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/devices/user/123")
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertFalse(chainCalled.get(), "Chain filter should NOT be called without token");
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Protected device endpoint /api/devices/user/123 with valid JWT passes to downstream")
+    void testProtectedDeviceEndpointWithValidToken() {
+        String token = JwtUtils.generateToken("testuser", "ROLE_USER", "user-123", secret);
+
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/api/devices/user/123")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .build();
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        StepVerifier.create(gatewayFilter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            assertEquals("testuser", ex.getRequest().getHeaders().getFirst("X-User-Name"));
+            assertEquals("ROLE_USER", ex.getRequest().getHeaders().getFirst("X-User-Role"));
+            assertEquals("user-123", ex.getRequest().getHeaders().getFirst("X-User-Id"));
+            return Mono.empty();
+        })).verifyComplete();
+
+        assertTrue(chainCalled.get());
+    }
 }

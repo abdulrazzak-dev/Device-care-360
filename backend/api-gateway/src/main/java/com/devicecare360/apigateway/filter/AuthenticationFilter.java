@@ -34,7 +34,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/troubleshoot",
             "/api/diagnose",
             "/api/ai",
-            "/api/devices",
+            "/api/devices/brands",
+            "/api/devices/issues",
+            "/api/devices/categories",
             "/api/repair-guides",
             "/api/technicians",
             "/v3/api-docs",
@@ -61,7 +63,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             String path = request.getURI().getPath();
 
             // 1. Immediately bypass authentication for OPTIONS (preflight), CorsUtils, and open endpoints
-            if (request.getMethod() == HttpMethod.OPTIONS
+            if (HttpMethod.OPTIONS.equals(request.getMethod())
                     || CorsUtils.isPreFlightRequest(request)
                     || (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path)))) {
                 return chain.filter(exchange);
@@ -70,21 +72,24 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             // 2. Authorization Header check
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 log.warn("Missing Authorization header for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authHeader == null || !authHeader.trim().startsWith("Bearer ")) {
+            if (authHeader == null || !authHeader.trim().regionMatches(true, 0, "Bearer ", 0, 7)) {
                 log.warn("Invalid Authorization header format for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
             String token = authHeader.trim().substring(7).trim();
             if ((token.startsWith("\"") && token.endsWith("\"") && token.length() >= 2) ||
                 (token.startsWith("'") && token.endsWith("'") && token.length() >= 2)) {
                 token = token.substring(1, token.length() - 1).trim();
+            }
+
+            if (token.isEmpty()) {
+                log.warn("Empty Bearer token for path: {}", path);
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
             try {
@@ -102,33 +107,30 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (io.jsonwebtoken.ExpiredJwtException e) {
                 log.warn("JWT token expired for path: {}. Expiration: {}", path, e.getClaims() != null ? e.getClaims().getExpiration() : "unknown");
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            } catch (io.jsonwebtoken.security.SecurityException e) {
-                log.warn("Invalid JWT signature for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            } catch (io.jsonwebtoken.MalformedJwtException e) {
-                log.warn("Malformed JWT token for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            } catch (io.jsonwebtoken.UnsupportedJwtException e) {
-                log.warn("Unsupported JWT token for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            } catch (IllegalArgumentException e) {
-                log.warn("JWT claims string is empty or invalid for path: {}", path);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
+            } catch (io.jsonwebtoken.security.SecurityException | io.jsonwebtoken.MalformedJwtException | io.jsonwebtoken.UnsupportedJwtException | IllegalArgumentException e) {
+                log.warn("Invalid JWT token for path: {}. Error: {}", path, e.getMessage());
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             } catch (Exception e) {
                 log.warn("JWT validation failed for path: {}. Error: {}", path, e.getMessage());
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
         };
     }
 
+    private reactor.core.publisher.Mono<Void> onError(org.springframework.web.server.ServerWebExchange exchange, HttpStatus status) {
+        org.springframework.http.server.reactive.ServerHttpResponse response = exchange.getResponse();
+        if (!response.isCommitted()) {
+            response.setStatusCode(status);
+            return response.setComplete();
+        }
+        return reactor.core.publisher.Mono.empty();
+    }
+
     private boolean isOpenEndpoint(String path) {
+        if (path == null) {
+            return false;
+        }
         return OPEN_API_ENDPOINTS.stream().anyMatch(path::startsWith);
     }
 
