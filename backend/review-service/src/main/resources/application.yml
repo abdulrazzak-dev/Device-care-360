@@ -25,7 +25,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
+      defaultZone: http://${EUREKA_HOST:device-care-360-discovery-service.onrender.com}:8761/eureka/
 
 management:
   endpoints:
