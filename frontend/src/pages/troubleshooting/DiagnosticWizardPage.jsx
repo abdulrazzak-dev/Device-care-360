@@ -25,7 +25,7 @@ const DEFAULT_ISSUES = [
 
 const DiagnosticWizardPage = () => {
   const [step, setStep] = useState(1);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [brands, setBrands] = useState([]);
   const [commonIssues, setCommonIssues] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Smartphone');
