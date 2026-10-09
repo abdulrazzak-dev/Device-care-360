@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { deviceService } from '../../services/deviceService';
 import { troubleshootingService } from '../../services/troubleshootingService';
@@ -6,8 +6,22 @@ import SafetyAlert from '../../components/safety/SafetyAlert';
 import RiskBadge from '../../components/safety/RiskBadge';
 import HighVoltageWarning from '../../components/safety/HighVoltageWarning';
 import Loader from '../../components/common/Loader';
-import { Cpu, ArrowRight, ArrowLeft, CheckCircle2, ShieldAlert, Wrench } from 'lucide-react';
+import { Cpu, ArrowRight, ArrowLeft, AlertTriangle, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const DEFAULT_CATEGORIES = [
+  'Smartphone', 'Laptop', 'Television', 'Refrigerator',
+  'Washing Machine', 'Air Conditioner', 'Printer', 'Computer',
+  'Tablet', 'Audio Device', 'Other'
+];
+
+const DEFAULT_BRANDS = ['Apple', 'Samsung', 'Dell', 'HP', 'LG', 'Sony', 'Lenovo', 'Other'];
+
+const DEFAULT_ISSUES = [
+  "Won't turn on", 'Battery draining fast', 'Overheating',
+  'No display / Black screen', 'Water damage', 'Unusual noise',
+  'Smoke / Burning smell', 'Swollen battery'
+];
 
 const DiagnosticWizardPage = () => {
   const [step, setStep] = useState(1);
@@ -20,49 +34,122 @@ const DiagnosticWizardPage = () => {
   const [selectedIssue, setSelectedIssue] = useState('');
   const [customIssue, setCustomIssue] = useState('');
   
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Cache for loaded brands and issues per category to avoid duplicate network calls
+  const [metadataCache, setMetadataCache] = useState({});
 
   useEffect(() => {
-    deviceService.getCategories().then((res) => setCategories(res.data || [])).catch(() => {});
+    let isMounted = true;
+    deviceService.getCategories()
+      .then((res) => {
+        if (isMounted && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setCategories(res.data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load categories from server, using defaults:', err.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const fetchCategoryDetails = useCallback(async (cat) => {
+    if (metadataCache[cat]) {
+      setBrands(metadataCache[cat].brands || []);
+      setCommonIssues(metadataCache[cat].issues || []);
+      return;
+    }
+
+    setLoadingMetadata(true);
+    try {
+      const [brandsRes, issuesRes] = await Promise.allSettled([
+        deviceService.getBrands(cat),
+        deviceService.getCommonIssues(cat)
+      ]);
+
+      const fetchedBrands = brandsRes.status === 'fulfilled' && brandsRes.value?.data ? brandsRes.value.data : [];
+      const fetchedIssues = issuesRes.status === 'fulfilled' && issuesRes.value?.data ? issuesRes.value.data : [];
+
+      setBrands(fetchedBrands);
+      setCommonIssues(fetchedIssues);
+
+      setMetadataCache((prev) => ({
+        ...prev,
+        [cat]: {
+          brands: fetchedBrands,
+          issues: fetchedIssues
+        }
+      }));
+    } finally {
+      setLoadingMetadata(false);
+    }
+  }, [metadataCache]);
 
   const handleSelectCategory = (cat) => {
     setSelectedCategory(cat);
-    deviceService.getBrands(cat).then((res) => setBrands(res.data || [])).catch(() => {});
-    deviceService.getCommonIssues(cat).then((res) => setCommonIssues(res.data || [])).catch(() => {});
+    setErrorMessage('');
+    fetchCategoryDetails(cat);
     setStep(2);
   };
 
   const handleSelectBrand = (brand) => {
     setSelectedBrand(brand);
+    setErrorMessage('');
     setStep(3);
   };
 
   const handleStep3Next = (e) => {
     e.preventDefault();
+    setErrorMessage('');
     setStep(4);
   };
 
   const handleRunAnalysis = async () => {
-    setStep(5);
+    if (analyzing) return;
+
+    setErrorMessage('');
     setAnalyzing(true);
-    const finalProblem = customIssue || selectedIssue || 'Device malfunction';
+    setStep(5);
+
+    const finalProblem = (customIssue && customIssue.trim()) || selectedIssue || 'Device malfunction';
     try {
       const res = await troubleshootingService.analyze({
         category: selectedCategory,
-        brand: selectedBrand,
-        model: model,
+        brand: selectedBrand || 'Generic',
+        model: model.trim(),
         issueDescription: finalProblem
       });
-      setAnalysisResult(res.data);
-      setStep(6);
+
+      if (res && res.data) {
+        setAnalysisResult(res.data);
+        setStep(6);
+      } else {
+        throw new Error('No diagnostic data returned from the analysis service.');
+      }
     } catch (err) {
-      alert('Diagnostic analysis failed: ' + err.message);
+      console.error('Diagnosis submission failed:', err);
+      const msg = err.message || 'Diagnostic analysis failed. Please verify your connection and try again.';
+      setErrorMessage(msg);
       setStep(4);
     } finally {
       setAnalyzing(false);
     }
+  };
+
+  const handleStartNewDiagnosis = () => {
+    setStep(1);
+    setSelectedBrand('');
+    setModel('');
+    setSelectedIssue('');
+    setCustomIssue('');
+    setAnalysisResult(null);
+    setErrorMessage('');
   };
 
   return (
@@ -86,12 +173,21 @@ const DiagnosticWizardPage = () => {
         </div>
       </div>
 
+      {/* Error notification banner */}
+      {errorMessage && (
+        <div className="alert alert-danger d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
+          <AlertTriangle size={20} className="flex-shrink-0 text-danger" />
+          <div className="flex-grow-1 small">{errorMessage}</div>
+          <button type="button" className="btn-close btn-sm" aria-label="Close" onClick={() => setErrorMessage('')}></button>
+        </div>
+      )}
+
       {/* STEP 1: CATEGORY */}
       {step === 1 && (
         <div className="card p-3 p-sm-4 border-0 shadow-sm">
           <h5 className="fw-bold mb-3">Step 1: Select Device Category</h5>
           <div className="row g-2 g-sm-3">
-            {(categories.length > 0 ? categories : ['Smartphone', 'Laptop', 'Television', 'Refrigerator', 'Washing Machine', 'Air Conditioner', 'Printer', 'Computer', 'Tablet', 'Audio Device', 'Other']).map((cat) => (
+            {(categories.length > 0 ? categories : DEFAULT_CATEGORIES).map((cat) => (
               <div className="col-6 col-sm-4 col-md-3" key={cat}>
                 <button
                   type="button"
@@ -114,15 +210,21 @@ const DiagnosticWizardPage = () => {
             <h5 className="fw-bold mb-0 text-break">Step 2: Select Brand for {selectedCategory}</h5>
             <button className="btn btn-sm btn-outline-secondary" onClick={() => setStep(1)}><ArrowLeft size={16} /> Back</button>
           </div>
-          <div className="row g-2 g-sm-3">
-            {(brands.length > 0 ? brands : ['Apple', 'Samsung', 'Dell', 'HP', 'LG', 'Sony', 'Lenovo', 'Other']).map((b) => (
-              <div className="col-6 col-sm-4 col-md-3" key={b}>
-                <button className="btn btn-outline-primary w-100 p-2.5 p-sm-3 fw-bold rounded-3 text-break" onClick={() => handleSelectBrand(b)}>
-                  {b}
-                </button>
-              </div>
-            ))}
-          </div>
+          {loadingMetadata ? (
+            <div className="py-4 text-center">
+              <Loader text={`Loading brands for ${selectedCategory}...`} />
+            </div>
+          ) : (
+            <div className="row g-2 g-sm-3">
+              {(brands.length > 0 ? brands : DEFAULT_BRANDS).map((b) => (
+                <div className="col-6 col-sm-4 col-md-3" key={b}>
+                  <button className="btn btn-outline-primary w-100 p-2.5 p-sm-3 fw-bold rounded-3 text-break" onClick={() => handleSelectBrand(b)}>
+                    {b}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -150,16 +252,18 @@ const DiagnosticWizardPage = () => {
         <div className="card p-3 p-sm-4 border-0 shadow-sm">
           <div className="d-flex align-items-center justify-content-between mb-3 gap-2">
             <h5 className="fw-bold mb-0">Step 4: Select or Describe Problem</h5>
-            <button className="btn btn-sm btn-outline-secondary" onClick={() => setStep(3)}><ArrowLeft size={16} /> Back</button>
+            <button className="btn btn-sm btn-outline-secondary" onClick={() => setStep(3)} disabled={analyzing}><ArrowLeft size={16} /> Back</button>
           </div>
           <div className="mb-4">
             <label className="form-label small fw-semibold">Common Issues for {selectedCategory}:</label>
             <div className="d-flex flex-wrap gap-2">
-              {(commonIssues.length > 0 ? commonIssues : ['Won\'t turn on', 'Battery draining fast', 'Overheating', 'No display / Black screen', 'Water damage', 'Unusual noise', 'Smoke / Burning smell', 'Swollen battery']).map((iss) => (
+              {(commonIssues.length > 0 ? commonIssues : DEFAULT_ISSUES).map((iss) => (
                 <button
                   key={iss}
+                  type="button"
                   className={`btn btn-sm ${selectedIssue === iss ? 'btn-primary' : 'btn-outline-secondary'} text-break`}
                   onClick={() => setSelectedIssue(iss)}
+                  disabled={analyzing}
                 >
                   {iss}
                 </button>
@@ -168,10 +272,21 @@ const DiagnosticWizardPage = () => {
           </div>
           <div className="mb-4">
             <label className="form-label small fw-semibold">Custom Problem Description:</label>
-            <textarea className="form-control" rows={3} placeholder="Describe exact symptoms, sounds, or visual defects..." value={customIssue} onChange={(e) => setCustomIssue(e.target.value)}></textarea>
+            <textarea
+              className="form-control"
+              rows={3}
+              placeholder="Describe exact symptoms, sounds, or visual defects..."
+              value={customIssue}
+              onChange={(e) => setCustomIssue(e.target.value)}
+              disabled={analyzing}
+            ></textarea>
           </div>
-          <button className="btn btn-success btn-lg w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 text-break" onClick={handleRunAnalysis}>
-            <Cpu size={20} className="flex-shrink-0" /> Run AI Safety & Fault Diagnosis
+          <button
+            className="btn btn-success btn-lg w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 text-break"
+            onClick={handleRunAnalysis}
+            disabled={analyzing}
+          >
+            <Cpu size={20} className="flex-shrink-0" /> {analyzing ? 'Analyzing Device Symptoms...' : 'Run AI Safety & Fault Diagnosis'}
           </button>
         </div>
       )}
@@ -238,7 +353,7 @@ const DiagnosticWizardPage = () => {
           </div>
 
           <div className="mt-4 pt-3 border-top d-flex flex-column flex-sm-row justify-content-between gap-2">
-            <button className="btn btn-outline-secondary w-100 w-sm-auto" onClick={() => setStep(1)}>Start New Diagnosis</button>
+            <button className="btn btn-outline-secondary w-100 w-sm-auto" onClick={handleStartNewDiagnosis}>Start New Diagnosis</button>
             <Link to="/technicians" className="btn btn-primary fw-bold w-100 w-sm-auto text-center">Find Technicians</Link>
           </div>
         </div>

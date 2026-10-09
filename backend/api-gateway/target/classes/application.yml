@@ -12,67 +12,99 @@ spring:
           lower-case-service-id: true
       routes:
         - id: auth-service
-          uri: lb://AUTH-SERVICE
+          uri: ${AUTH_SERVICE_URL:https://device-care-360-auth-service.onrender.com}
           predicates:
             - Path=/api/auth/**
 
         - id: user-service
-          uri: lb://USER-SERVICE
+          uri: ${USER_SERVICE_URL:https://device-care-360-user-service.onrender.com}
           predicates:
             - Path=/api/users/**
           filters:
             - AuthenticationFilter
 
-        - id: device-service
-          uri: lb://DEVICE-SERVICE
+        - id: device-brands-public
+          uri: ${DEVICE_SERVICE_URL:https://device-care-360-device-service.onrender.com}
+          predicates:
+            - Path=/api/devices/brands
+            - Method=GET
+
+        - id: device-issues-public
+          uri: ${DEVICE_SERVICE_URL:https://device-care-360-device-service.onrender.com}
+          predicates:
+            - Path=/api/devices/issues
+            - Method=GET
+
+        - id: device-categories-public
+          uri: ${DEVICE_SERVICE_URL:https://device-care-360-device-service.onrender.com}
+          predicates:
+            - Path=/api/devices/categories
+            - Method=GET
+
+        - id: device-service-protected
+          uri: ${DEVICE_SERVICE_URL:https://device-care-360-device-service.onrender.com}
           predicates:
             - Path=/api/devices/**
           filters:
             - AuthenticationFilter
 
         - id: ai-troubleshooting-service
-          uri: lb://AI-TROUBLESHOOTING-SERVICE
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
           predicates:
-            - Path=/api/troubleshooting/**, /api/troubleshoot/**, /api/diagnose/**, /api/ai/**
+            - Path=/api/troubleshooting/**
+
+        - id: ai-troubleshooting-diagnose-alias
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
+          predicates:
+            - Path=/api/diagnose/**
+          filters:
+            - RewritePath=/api/diagnose/(?<segment>.*), /api/troubleshooting/$\{segment}
+
+        - id: ai-troubleshooting-troubleshoot-alias
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
+          predicates:
+            - Path=/api/troubleshoot/**
+          filters:
+            - RewritePath=/api/troubleshoot/(?<segment>.*), /api/troubleshooting/$\{segment}
 
         - id: repair-guide-service
-          uri: lb://REPAIR-GUIDE-SERVICE
+          uri: ${REPAIR_GUIDE_SERVICE_URL:https://device-care-360-repair-guide-service.onrender.com}
           predicates:
             - Path=/api/repair-guides/**
 
         - id: technician-service
-          uri: lb://TECHNICIAN-SERVICE
+          uri: ${TECHNICIAN_SERVICE_URL:https://device-care-360-technician-service.onrender.com}
           predicates:
             - Path=/api/technicians/**
 
         - id: booking-service
-          uri: lb://BOOKING-SERVICE
+          uri: ${BOOKING_SERVICE_URL:https://device-care-360-booking-service.onrender.com}
           predicates:
             - Path=/api/bookings/**
           filters:
             - AuthenticationFilter
 
         - id: payment-service
-          uri: lb://PAYMENT-SERVICE
+          uri: ${PAYMENT_SERVICE_URL:https://device-care-360-payment-service.onrender.com}
           predicates:
             - Path=/api/payments/**
           filters:
             - AuthenticationFilter
 
         - id: review-service
-          uri: lb://REVIEW-SERVICE
+          uri: ${REVIEW_SERVICE_URL:https://device-care-360-review-service.onrender.com}
           predicates:
             - Path=/api/reviews/**
 
         - id: notification-service
-          uri: lb://NOTIFICATION-SERVICE
+          uri: ${NOTIFICATION_SERVICE_URL:https://device-care-360-notification-service.onrender.com}
           predicates:
             - Path=/api/notifications/**
           filters:
             - AuthenticationFilter
 
         - id: admin-service
-          uri: lb://ADMIN-SERVICE
+          uri: ${ADMIN_SERVICE_URL:https://device-care-360-admin-service.onrender.com}
           predicates:
             - Path=/api/admin/**
           filters:

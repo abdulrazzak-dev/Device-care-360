@@ -55,7 +55,7 @@ public class AiTroubleshootingController {
     }
 
     @GetMapping("/history/{userId}")
-    public ResponseEntity<ApiResponse<List<TroubleshootingLog>>> getHistory(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<List<TroubleshootingLog>>> getHistory(@PathVariable(name = "userId") String userId) {
         return ResponseEntity.ok(ApiResponse.success(troubleshootingService.getHistory(userId)));
     }
 }

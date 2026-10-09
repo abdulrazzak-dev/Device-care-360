@@ -16,7 +16,7 @@ spring:
 eureka:
   instance:
     prefer-ip-address: true
-    hostname: ${RAILWAY_PRIVATE_DOMAIN:${HOSTNAME:localhost}}
+    hostname: ${RENDER_EXTERNAL_HOSTNAME:${HOSTNAME:localhost}}
     instance-id: ${HOSTNAME:auth-service}:${spring.application.name}:${server.port}
     non-secure-port: ${server.port}
     lease-renewal-interval-in-seconds: 10
