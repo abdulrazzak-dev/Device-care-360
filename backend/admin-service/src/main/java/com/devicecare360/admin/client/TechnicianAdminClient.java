@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
+
 @FeignClient(name = "technician-service", path = "/api/technicians")
 public interface TechnicianAdminClient {
 
