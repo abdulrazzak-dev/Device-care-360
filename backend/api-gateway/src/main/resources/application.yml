@@ -11,8 +11,8 @@ spring:
           enabled: true
           lower-case-service-id: true
       httpclient:
-        connect-timeout: 10000
-        response-timeout: 60s
+        connect-timeout: 30000
+        response-timeout: 90s
         pool:
           type: ELASTIC
           max-idle-time: 15s
@@ -56,19 +56,19 @@ spring:
             - AuthenticationFilter
 
         - id: ai-troubleshooting-service
-          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting.onrender.com}
           predicates:
             - Path=/api/troubleshooting/**
 
         - id: ai-troubleshooting-diagnose-alias
-          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting.onrender.com}
           predicates:
             - Path=/api/diagnose/**
           filters:
             - RewritePath=/api/diagnose/(?<segment>.*), /api/troubleshooting/$\{segment}
 
         - id: ai-troubleshooting-troubleshoot-alias
-          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting-service.onrender.com}
+          uri: ${AI_TROUBLESHOOTING_SERVICE_URL:https://device-care-360-ai-troubleshooting.onrender.com}
           predicates:
             - Path=/api/troubleshoot/**
           filters:
