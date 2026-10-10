@@ -29,12 +29,12 @@ class LoggingFilterTest {
         MockServerWebExchange exchange = MockServerWebExchange.from(request);
         Route mockRoute = Route.async()
                 .id("ai-troubleshooting-service")
-                .uri(URI.create("https://device-care-360--ai-troubleshooting-service.onrender.com"))
+                .uri(URI.create("https://device-care-360-ai-troubleshooting-service.onrender.com"))
                 .order(0)
                 .predicate(swe -> true)
                 .build();
         exchange.getAttributes().put(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR, mockRoute);
-        exchange.getAttributes().put(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR, URI.create("https://device-care-360--ai-troubleshooting-service.onrender.com/api/troubleshooting/analyze"));
+        exchange.getAttributes().put(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR, URI.create("https://device-care-360-ai-troubleshooting-service.onrender.com/api/troubleshooting/analyze"));
 
         AtomicBoolean chainCalled = new AtomicBoolean(false);
         GatewayFilterChain chain = ex -> {
