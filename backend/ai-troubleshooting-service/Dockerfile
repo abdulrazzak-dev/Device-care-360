@@ -17,16 +17,16 @@ ENV MAVEN_OPTS="-Daether.connector.http.retryHandler.count=5 \
 # Copy source tree from build context
 COPY . .
 
-# Auto-detect context: support both Root Directory = backend AND Root Directory = repository root
+# Setup build directory and auto-detect context (supports Render Root Directory: 'backend' or repository root)
 RUN if [ -f "backend/pom.xml" ]; then \
-        echo "Detected repository root build context (moving backend to /workspace/build)"; \
-        mkdir -p /workspace/build && cp -a backend/. /workspace/build/; \
+        echo "Detected repository root build context"; \
+        mkdir -p /build && cp -a backend/. /build/; \
     else \
-        echo "Detected backend build context (using /workspace as build root)"; \
-        mkdir -p /workspace/build && cp -a . /workspace/build/; \
+        echo "Detected backend build context"; \
+        mkdir -p /build && cp -a /workspace/. /build/; \
     fi
 
-WORKDIR /workspace/build
+WORKDIR /build
 
 # Execute single-pass reactor build:
 # -pl ai-troubleshooting-service : focuses on the AI microservice
