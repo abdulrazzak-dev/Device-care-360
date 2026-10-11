@@ -66,6 +66,6 @@ RUN chown -R spring:spring /app
 
 USER spring
 
-EXPOSE 8084
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
