@@ -1,51 +1,30 @@
-# syntax=docker/dockerfile:1.7
 # ============================
 # BUILD STAGE
 # ============================
-FROM maven:3.9.9-eclipse-temurin-17 AS builder
+FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Configure bounded retry behavior for Maven Resolver (Aether) and Wagon on HTTP 429/503
-ENV MAVEN_OPTS="-Daether.connector.http.retryHandler.count=5 \
-    -Daether.connector.http.retryHandler.interval=3000 \
-    -Daether.connector.http.retryHandler.intervalMax=30000 \
-    -Daether.connector.http.retryHandler.serviceUnavailable=429,503 \
-    -Dmaven.wagon.http.retryHandler.count=5 \
-    -Dmaven.wagon.http.retryHandler.requestSentCount=5"
+# 1. Copy POM files
+COPY pom.xml .
+COPY shared/pom.xml shared/pom.xml
+COPY ai-troubleshooting-service/pom.xml ai-troubleshooting-service/pom.xml
 
-# Copy source tree from build context
-COPY . .
+# 2. Install parent POM non-recursively into local Maven cache (~/.m2)
+RUN mvn -B -ntp install -N
 
-# Setup build directory and auto-detect context (supports Render Root Directory: 'backend' or repository root)
-RUN if [ -f "backend/pom.xml" ]; then \
-        echo "Detected repository root build context"; \
-        mkdir -p /build && cp -a backend/. /build/; \
-    else \
-        echo "Detected backend build context"; \
-        mkdir -p /build && cp -a /workspace/. /build/; \
-    fi
+# 3. Copy source code
+COPY shared/src shared/src
+COPY ai-troubleshooting-service/src ai-troubleshooting-service/src
 
-WORKDIR /build
+# 4. Build and install shared library into local cache
+RUN mvn -B -ntp -f shared/pom.xml clean install -DskipTests
 
-# Execute single-pass reactor build:
-# -pl ai-troubleshooting-service : focuses on the AI microservice
-# -am (--also-make)              : builds upstream dependencies (com.devicecare360:shared)
-# package                         : compiles and packages fat JAR without 'clean'
-# Cache mount preserves /root/.m2/repository across builds
-RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn -B -ntp \
-    -f pom.xml \
-    -pl ai-troubleshooting-service \
-    -am package \
-    -DskipTests
+# 5. Build and package the microservice
+RUN mvn -B -ntp -f ai-troubleshooting-service/pom.xml clean package -DskipTests
 
-# Stage the executable Spring Boot fat JAR (explicitly excluding .jar.original)
-RUN set -eu; \
-    JAR_FILE=$(find ai-troubleshooting-service/target -maxdepth 1 -name "*.jar" ! -name "*.original" | head -n 1); \
-    echo "Staging executable JAR: $JAR_FILE"; \
-    test -n "$JAR_FILE"; \
-    cp "$JAR_FILE" /workspace/app.jar
+# 6. Copy generated executable fat JAR to temporary location
+RUN cp ai-troubleshooting-service/target/*.jar /tmp/app.jar
 
 
 # ============================
@@ -58,8 +37,8 @@ WORKDIR /app
 # Create unprivileged non-root user and group
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Copy only the executable fat JAR from builder stage
-COPY --from=builder /workspace/app.jar /app/app.jar
+# Copy only the executable JAR from builder stage
+COPY --from=builder /tmp/app.jar app.jar
 
 # Set ownership to unprivileged user
 RUN chown -R spring:spring /app
@@ -68,4 +47,4 @@ USER spring
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
