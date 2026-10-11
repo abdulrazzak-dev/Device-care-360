@@ -1,51 +1,51 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7
 # ============================
 # BUILD STAGE
 # ============================
-FROM maven:3.9.11-eclipse-temurin-17 AS builder
+FROM maven:3.9.9-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# Configure bounded retries and backoff for Maven Resolver (Aether) and Wagon on HTTP 429/503
+# Configure bounded retry behavior for Maven Resolver (Aether) and Wagon on HTTP 429/503
 ENV MAVEN_OPTS="-Daether.connector.http.retryHandler.count=5 \
     -Daether.connector.http.retryHandler.interval=3000 \
-    -Daether.connector.http.retryHandler.intervalMax=15000 \
+    -Daether.connector.http.retryHandler.intervalMax=30000 \
     -Daether.connector.http.retryHandler.serviceUnavailable=429,503 \
     -Dmaven.wagon.http.retryHandler.count=5 \
     -Dmaven.wagon.http.retryHandler.requestSentCount=5"
 
-# 1. Copy parent aggregator POM and all module POMs to allow reactor resolution
-COPY pom.xml .
-COPY shared/pom.xml shared/pom.xml
-COPY config-server/pom.xml config-server/pom.xml
-COPY discovery-service/pom.xml discovery-service/pom.xml
-COPY api-gateway/pom.xml api-gateway/pom.xml
-COPY auth-service/pom.xml auth-service/pom.xml
-COPY user-service/pom.xml user-service/pom.xml
-COPY device-service/pom.xml device-service/pom.xml
-COPY ai-troubleshooting-service/pom.xml ai-troubleshooting-service/pom.xml
-COPY repair-guide-service/pom.xml repair-guide-service/pom.xml
-COPY technician-service/pom.xml technician-service/pom.xml
-COPY booking-service/pom.xml booking-service/pom.xml
-COPY payment-service/pom.xml payment-service/pom.xml
-COPY review-service/pom.xml review-service/pom.xml
-COPY notification-service/pom.xml notification-service/pom.xml
-COPY admin-service/pom.xml admin-service/pom.xml
+# Copy source tree from build context
+COPY . .
 
-# 2. Copy source code for the required reactor projects (shared library and AI microservice)
-COPY shared/src shared/src
-COPY ai-troubleshooting-service/src ai-troubleshooting-service/src
+# Auto-detect context: support both Root Directory = backend AND Root Directory = repository root
+RUN if [ -f "backend/pom.xml" ]; then \
+        echo "Detected repository root build context (moving backend to /workspace/build)"; \
+        mkdir -p /workspace/build && cp -a backend/. /workspace/build/; \
+    else \
+        echo "Detected backend build context (using /workspace as build root)"; \
+        mkdir -p /workspace/build && cp -a . /workspace/build/; \
+    fi
 
-# 3. Execute single-pass reactor build:
-# -pl ai-troubleshooting-service: targets the AI troubleshooting microservice
-# -am (--also-make): automatically builds upstream reactor dependencies (com.devicecare360:shared)
-# package: produces the fat JAR without running 'clean' (avoiding unnecessary maven-clean-plugin download)
-# Cache mount preserves /root/.m2 across builds
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -ntp -f pom.xml -pl ai-troubleshooting-service -am package -DskipTests
+WORKDIR /workspace/build
 
-# 4. Copy generated executable fat JAR to runtime staging path
-RUN cp ai-troubleshooting-service/target/ai-troubleshooting-service-*.jar /tmp/app.jar
+# Execute single-pass reactor build:
+# -pl ai-troubleshooting-service : focuses on the AI microservice
+# -am (--also-make)              : builds upstream dependencies (com.devicecare360:shared)
+# package                         : compiles and packages fat JAR without 'clean'
+# Cache mount preserves /root/.m2/repository across builds
+RUN --mount=type=cache,target=/root/.m2/repository \
+    mvn -B -ntp \
+    -f pom.xml \
+    -pl ai-troubleshooting-service \
+    -am package \
+    -DskipTests
+
+# Stage the executable Spring Boot fat JAR (explicitly excluding .jar.original)
+RUN set -eu; \
+    JAR_FILE=$(find ai-troubleshooting-service/target -maxdepth 1 -name "*.jar" ! -name "*.original" | head -n 1); \
+    echo "Staging executable JAR: $JAR_FILE"; \
+    test -n "$JAR_FILE"; \
+    cp "$JAR_FILE" /workspace/app.jar
 
 
 # ============================
@@ -58,8 +58,8 @@ WORKDIR /app
 # Create unprivileged non-root user and group
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Copy only the executable JAR from builder stage
-COPY --from=builder /tmp/app.jar app.jar
+# Copy only the executable fat JAR from builder stage
+COPY --from=builder /workspace/app.jar /app/app.jar
 
 # Set ownership to unprivileged user
 RUN chown -R spring:spring /app
@@ -68,4 +68,4 @@ USER spring
 
 EXPOSE 8084
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
