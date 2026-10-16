@@ -49,29 +49,33 @@ public class AiTroubleshootingService {
 
         TroubleshootingLog savedLog = logRepository.save(logEntity);
 
-        TroubleshootingCompletedEvent completedEvent = TroubleshootingCompletedEvent.builder()
-                .troubleshootingId(savedLog.getId())
-                .userId(userId)
-                .category(request.getCategory())
-                .brand(request.getBrand())
-                .issueDescription(request.getIssueDescription())
-                .riskLevel(finalResponse.getRiskLevel())
-                .requiresProfessional(finalResponse.isRequiresProfessional())
-                .build();
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TROUBLESHOOTING_COMPLETED_ROUTING_KEY, completedEvent);
-
-        if (safetyResult.highRisk()) {
-            HighRiskIssueDetectedEvent highRiskEvent = HighRiskIssueDetectedEvent.builder()
+        try {
+            TroubleshootingCompletedEvent completedEvent = TroubleshootingCompletedEvent.builder()
                     .troubleshootingId(savedLog.getId())
                     .userId(userId)
                     .category(request.getCategory())
                     .brand(request.getBrand())
                     .issueDescription(request.getIssueDescription())
                     .riskLevel(finalResponse.getRiskLevel())
-                    .hazardCategory(safetyResult.hazardCategory())
-                    .recommendedAction(finalResponse.getRecommendedAction())
+                    .requiresProfessional(finalResponse.isRequiresProfessional())
                     .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.HIGH_RISK_DETECTED_ROUTING_KEY, highRiskEvent);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TROUBLESHOOTING_COMPLETED_ROUTING_KEY, completedEvent);
+
+            if (safetyResult.highRisk()) {
+                HighRiskIssueDetectedEvent highRiskEvent = HighRiskIssueDetectedEvent.builder()
+                        .troubleshootingId(savedLog.getId())
+                        .userId(userId)
+                        .category(request.getCategory())
+                        .brand(request.getBrand())
+                        .issueDescription(request.getIssueDescription())
+                        .riskLevel(finalResponse.getRiskLevel())
+                        .hazardCategory(safetyResult.hazardCategory())
+                        .recommendedAction(finalResponse.getRecommendedAction())
+                        .build();
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.HIGH_RISK_DETECTED_ROUTING_KEY, highRiskEvent);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to publish troubleshooting event to RabbitMQ: {}", e.getMessage());
         }
 
         return finalResponse;
