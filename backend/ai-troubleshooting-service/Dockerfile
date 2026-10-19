@@ -13,10 +13,7 @@ ENV MAVEN_OPTS="-Daether.connector.http.retryHandler.count=5 \
     -Dmaven.wagon.http.retryHandler.count=5 \
     -Dmaven.wagon.http.retryHandler.requestSentCount=5"
 
-# 1. Copy Maven configuration (.mvn/maven.config)
-COPY .mvn .mvn
-
-# 2. Copy parent aggregator POM and all module POMs to allow reactor resolution
+# 1. Copy parent aggregator POM and all module POMs to allow reactor resolution
 COPY pom.xml .
 COPY shared/pom.xml shared/pom.xml
 COPY config-server/pom.xml config-server/pom.xml
@@ -34,7 +31,7 @@ COPY review-service/pom.xml review-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY admin-service/pom.xml admin-service/pom.xml
 
-# 3. Copy source code for the required reactor projects (shared library and AI microservice)
+# 2. Copy source code for the required reactor projects (shared library and AI microservice)
 COPY shared/src shared/src
 COPY ai-troubleshooting-service/src ai-troubleshooting-service/src
 
