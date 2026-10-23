@@ -22,8 +22,8 @@ public class AiTroubleshootingApplication {
 
     @EventListener
     public void onWebServerReady(WebServerInitializedEvent event) {
-        log.info("Embedded web server initialized successfully on port: {} with namespace: {}",
-                event.getWebServer().getPort(), event.getServerNamespace());
+        log.info("Embedded web server initialized successfully on port: {}",
+                event.getWebServer().getPort());
     }
 
     @EventListener
