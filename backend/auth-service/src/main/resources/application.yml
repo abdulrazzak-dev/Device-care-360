@@ -1,17 +1,21 @@
 server:
   port: ${PORT:8081}
+  address: 0.0.0.0
 
 spring:
   application:
     name: auth-service
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0}
+      uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/auth_db?retryWrites=true&w=majority&appName=Cluster0&serverSelectionTimeoutMS=5000&connectTimeoutMS=5000}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
+    listener:
+      simple:
+        auto-startup: false
 
 eureka:
   instance:
@@ -25,7 +29,13 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://${EUREKA_HOST:device-care-360.railway.internal}:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:https://device-care-360-discovery-service.onrender.com/eureka/}
+
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:https://device-care-360-user-service.onrender.com}
+  technician-service:
+    url: ${TECHNICIAN_SERVICE_URL:https://device-care-360-technician-service.onrender.com}
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
@@ -36,3 +46,6 @@ management:
     web:
       exposure:
         include: health,info,metrics
+  health:
+    rabbit:
+      enabled: false

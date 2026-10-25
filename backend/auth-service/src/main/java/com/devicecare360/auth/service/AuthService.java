@@ -14,10 +14,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -34,15 +42,32 @@ public class AuthService {
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
+    @Value("${services.user-service.url:${USER_SERVICE_URL:https://device-care-360-user-service.onrender.com}}")
+    private String userServiceUrl;
+
+    @Value("${services.technician-service.url:${TECHNICIAN_SERVICE_URL:https://device-care-360-technician-service.onrender.com}}")
+    private String technicianServiceUrl;
+
+    private RestTemplate restTemplate;
+
     @PostConstruct
     public void init() {
         String cleanSecret = JwtUtils.sanitizeSecret(jwtSecret);
         String fingerprint = JwtUtils.getSecretFingerprint(cleanSecret);
         log.info("AuthService JWT Security configured: algorithm={}, secretLength={}, sha256Fingerprint={}",
                 JwtUtils.SIGNATURE_ALGORITHM, cleanSecret.length(), fingerprint);
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(5000);
+        this.restTemplate = new RestTemplate(factory);
     }
 
     public AuthResponse register(RegisterRequest request) {
+        return register(request, "N/A");
+    }
+
+    public AuthResponse register(RegisterRequest request, String correlationId) {
         if (authUserRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already taken: " + request.getUsername());
         }
@@ -63,28 +88,17 @@ public class AuthService {
                 .build();
 
         AuthUser savedUser = authUserRepository.save(user);
+        log.info("[CorrelationId: {}] AuthUser created with ID: {} and role: {}", correlationId, savedUser.getId(), role);
 
+        // 1. Direct synchronous profile persistence to downstream microservice (user-service / technician-service)
         if ("TECHNICIAN".equals(role)) {
-            TechnicianRegisteredEvent techEvent = TechnicianRegisteredEvent.builder()
-                    .technicianId(savedUser.getId())
-                    .userId(savedUser.getId())
-                    .email(savedUser.getEmail())
-                    .fullName(request.getFullName())
-                    .phone(request.getPhone())
-                    .specializations(Collections.emptyList())
-                    .serviceAreas(Collections.emptyList())
-                    .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TECH_REGISTERED_ROUTING_KEY, techEvent);
+            syncTechnicianProfile(savedUser.getId(), request, correlationId);
         } else {
-            UserRegisteredEvent userEvent = UserRegisteredEvent.builder()
-                    .userId(savedUser.getId())
-                    .username(savedUser.getUsername())
-                    .email(savedUser.getEmail())
-                    .fullName(request.getFullName())
-                    .role(role)
-                    .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.USER_REGISTERED_ROUTING_KEY, userEvent);
+            syncUserProfile(savedUser.getId(), request, correlationId);
         }
+
+        // 2. Publish async event to RabbitMQ (resilient against broker connection refusal)
+        publishRegistrationEvent(savedUser.getId(), savedUser.getUsername(), savedUser.getEmail(), request, role, correlationId);
 
         String token = JwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole(), savedUser.getId(), jwtSecret, jwtExpiration);
 
@@ -95,6 +109,89 @@ public class AuthService {
                 .email(savedUser.getEmail())
                 .role(savedUser.getRole())
                 .build();
+    }
+
+    private void syncUserProfile(String userId, RegisterRequest request, String correlationId) {
+        String targetUrl = userServiceUrl.replaceAll("/+$", "") + "/api/users";
+        log.info("[CorrelationId: {}] Synchronizing user profile with user-service at: {}", correlationId, targetUrl);
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("id", userId);
+            payload.put("username", request.getUsername());
+            payload.put("email", request.getEmail());
+            payload.put("fullName", request.getFullName());
+            payload.put("phone", request.getPhone() != null ? request.getPhone() : "");
+            payload.put("status", "ACTIVE");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Correlation-Id", correlationId);
+            headers.set("X-User-Id", userId);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(targetUrl, entity, String.class);
+            log.info("[CorrelationId: {}] Downstream user-service profile creation status: {}", correlationId, response.getStatusCode());
+        } catch (Exception e) {
+            log.warn("[CorrelationId: {}] Direct profile synchronization to user-service failed: {}. Profile will be lazily initialized on demand.",
+                    correlationId, e.getMessage());
+        }
+    }
+
+    private void syncTechnicianProfile(String technicianId, RegisterRequest request, String correlationId) {
+        String targetUrl = technicianServiceUrl.replaceAll("/+$", "") + "/api/technicians/register";
+        log.info("[CorrelationId: {}] Synchronizing technician profile with technician-service at: {}", correlationId, targetUrl);
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("id", technicianId);
+            payload.put("fullName", request.getFullName());
+            payload.put("email", request.getEmail());
+            payload.put("phone", request.getPhone() != null ? request.getPhone() : "");
+            payload.put("available", true);
+            payload.put("verificationStatus", "PENDING");
+            payload.put("specializations", Collections.emptyList());
+            payload.put("serviceAreas", Collections.emptyList());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Correlation-Id", correlationId);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(targetUrl, entity, String.class);
+            log.info("[CorrelationId: {}] Downstream technician-service profile creation status: {}", correlationId, response.getStatusCode());
+        } catch (Exception e) {
+            log.warn("[CorrelationId: {}] Direct profile synchronization to technician-service failed: {}. Profile will be lazily initialized on demand.",
+                    correlationId, e.getMessage());
+        }
+    }
+
+    private void publishRegistrationEvent(String userId, String username, String email, RegisterRequest request, String role, String correlationId) {
+        try {
+            if ("TECHNICIAN".equals(role)) {
+                TechnicianRegisteredEvent techEvent = TechnicianRegisteredEvent.builder()
+                        .technicianId(userId)
+                        .userId(userId)
+                        .email(email)
+                        .fullName(request.getFullName())
+                        .phone(request.getPhone())
+                        .specializations(Collections.emptyList())
+                        .serviceAreas(Collections.emptyList())
+                        .build();
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TECH_REGISTERED_ROUTING_KEY, techEvent);
+                log.info("[CorrelationId: {}] Published TechnicianRegisteredEvent to RabbitMQ successfully", correlationId);
+            } else {
+                UserRegisteredEvent userEvent = UserRegisteredEvent.builder()
+                        .userId(userId)
+                        .username(username)
+                        .email(email)
+                        .fullName(request.getFullName())
+                        .role(role)
+                        .build();
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.USER_REGISTERED_ROUTING_KEY, userEvent);
+                log.info("[CorrelationId: {}] Published UserRegisteredEvent to RabbitMQ successfully", correlationId);
+            }
+        } catch (Exception e) {
+            log.warn("[CorrelationId: {}] RabbitMQ unavailable. Skipped async event publish: {}", correlationId, e.getMessage());
+        }
     }
 
     public AuthResponse login(LoginRequest request) {

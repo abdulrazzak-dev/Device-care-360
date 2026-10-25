@@ -3,19 +3,47 @@ package com.devicecare360.user.service;
 import com.devicecare360.user.document.UserProfile;
 import com.devicecare360.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserProfileRepository userProfileRepository;
 
+    public UserProfile createUserProfile(UserProfile profile) {
+        if (profile.getId() != null && userProfileRepository.existsById(profile.getId())) {
+            log.info("UserProfile already exists for ID: {}. Returning existing record.", profile.getId());
+            return userProfileRepository.findById(profile.getId()).get();
+        }
+        if (profile.getStatus() == null) {
+            profile.setStatus("ACTIVE");
+        }
+        if (profile.getCreatedAt() == null) {
+            profile.setCreatedAt(LocalDateTime.now());
+        }
+        profile.setUpdatedAt(LocalDateTime.now());
+        UserProfile saved = userProfileRepository.save(profile);
+        log.info("UserProfile successfully persisted for ID: {}", saved.getId());
+        return saved;
+    }
+
     public UserProfile getUserProfile(String id) {
         return userProfileRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User profile not found for ID: " + id));
+                .orElseGet(() -> {
+                    log.warn("UserProfile not found for ID: {}. Lazily initializing default active profile.", id);
+                    UserProfile fallback = UserProfile.builder()
+                            .id(id)
+                            .status("ACTIVE")
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    return userProfileRepository.save(fallback);
+                });
     }
 
     public UserProfile updateUserProfile(String id, UserProfile updateRequest) {

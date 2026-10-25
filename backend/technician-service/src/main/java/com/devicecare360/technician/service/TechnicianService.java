@@ -3,6 +3,7 @@ package com.devicecare360.technician.service;
 import com.devicecare360.technician.document.TechnicianProfile;
 import com.devicecare360.technician.repository.TechnicianProfileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,15 +11,22 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TechnicianService {
 
     private final TechnicianProfileRepository repository;
 
     public TechnicianProfile registerTechnician(TechnicianProfile profile) {
+        if (profile.getId() != null && repository.existsById(profile.getId())) {
+            log.info("TechnicianProfile already exists for ID: {}. Returning existing record.", profile.getId());
+            return repository.findById(profile.getId()).get();
+        }
         profile.setVerificationStatus("PENDING");
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());
-        return repository.save(profile);
+        TechnicianProfile saved = repository.save(profile);
+        log.info("TechnicianProfile successfully persisted for ID: {}", saved.getId());
+        return saved;
     }
 
     public List<TechnicianProfile> getAllTechnicians() {
@@ -27,7 +35,19 @@ public class TechnicianService {
 
     public TechnicianProfile getTechnicianById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Technician not found for ID: " + id));
+                .orElseGet(() -> {
+                    log.warn("TechnicianProfile not found for ID: {}. Initializing default profile.", id);
+                    TechnicianProfile fallback = TechnicianProfile.builder()
+                            .id(id)
+                            .available(true)
+                            .verificationStatus("PENDING")
+                            .averageRating(0.0)
+                            .totalReviews(0)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    return repository.save(fallback);
+                });
     }
 
     public TechnicianProfile updateTechnician(String id, TechnicianProfile updateRequest) {
