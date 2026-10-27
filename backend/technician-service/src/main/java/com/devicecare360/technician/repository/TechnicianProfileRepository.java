@@ -7,7 +7,9 @@ import java.util.List;
 
 public interface TechnicianProfileRepository extends MongoRepository<TechnicianProfile, String> {
     List<TechnicianProfile> findBySpecializationsContaining(String specialization);
+    List<TechnicianProfile> findBySpecializationsContainingIgnoreCase(String specialization);
     List<TechnicianProfile> findByServiceAreasContaining(String serviceArea);
+    List<TechnicianProfile> findByServiceAreasContainingIgnoreCase(String serviceArea);
     List<TechnicianProfile> findByVerificationStatus(String verificationStatus);
     List<TechnicianProfile> findByAvailable(boolean available);
 }

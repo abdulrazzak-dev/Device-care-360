@@ -43,6 +43,8 @@ public class TechnicianService {
                             .verificationStatus("PENDING")
                             .averageRating(0.0)
                             .totalReviews(0)
+                            .hourlyRate(2500.0)
+                            .yearsOfExperience(5)
                             .createdAt(LocalDateTime.now())
                             .updatedAt(LocalDateTime.now())
                             .build();
@@ -53,10 +55,14 @@ public class TechnicianService {
     public TechnicianProfile updateTechnician(String id, TechnicianProfile updateRequest) {
         TechnicianProfile existing = getTechnicianById(id);
         if (updateRequest.getFullName() != null) existing.setFullName(updateRequest.getFullName());
+        if (updateRequest.getEmail() != null) existing.setEmail(updateRequest.getEmail());
         if (updateRequest.getPhone() != null) existing.setPhone(updateRequest.getPhone());
         if (updateRequest.getSpecializations() != null) existing.setSpecializations(updateRequest.getSpecializations());
         if (updateRequest.getServiceAreas() != null) existing.setServiceAreas(updateRequest.getServiceAreas());
         if (updateRequest.getVerificationStatus() != null) existing.setVerificationStatus(updateRequest.getVerificationStatus());
+        if (updateRequest.getHourlyRate() != null) existing.setHourlyRate(updateRequest.getHourlyRate());
+        if (updateRequest.getYearsOfExperience() != null) existing.setYearsOfExperience(updateRequest.getYearsOfExperience());
+        if (updateRequest.getProfileImageUrl() != null) existing.setProfileImageUrl(updateRequest.getProfileImageUrl());
         existing.setUpdatedAt(LocalDateTime.now());
         return repository.save(existing);
     }
@@ -70,9 +76,9 @@ public class TechnicianService {
 
     public List<TechnicianProfile> searchTechnicians(String specialization, String serviceArea, Boolean available, String status) {
         if (specialization != null && !specialization.isBlank()) {
-            return repository.findBySpecializationsContaining(specialization);
+            return repository.findBySpecializationsContainingIgnoreCase(specialization.trim());
         } else if (serviceArea != null && !serviceArea.isBlank()) {
-            return repository.findByServiceAreasContaining(serviceArea);
+            return repository.findByServiceAreasContainingIgnoreCase(serviceArea.trim());
         } else if (status != null && !status.isBlank()) {
             return repository.findByVerificationStatus(status);
         } else if (available != null) {

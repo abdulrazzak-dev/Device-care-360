@@ -1,8 +1,9 @@
 import apiClient from './apiClient';
 
 export const technicianService = {
-  getAll: async () => {
-    return await apiClient.get('/api/technicians');
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return await apiClient.get(`/api/technicians${query ? `?${query}` : ''}`);
   },
 
   getById: async (id) => {

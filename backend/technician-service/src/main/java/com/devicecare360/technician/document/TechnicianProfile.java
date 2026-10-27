@@ -32,6 +32,11 @@ public class TechnicianProfile {
     @Builder.Default
     private int totalReviews = 0;
     @Builder.Default
+    private Double hourlyRate = 2500.0;
+    @Builder.Default
+    private Integer yearsOfExperience = 5;
+    private String profileImageUrl;
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

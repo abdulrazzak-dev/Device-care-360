@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
+const API_GATEWAY_URL =
+  import.meta.env.VITE_API_GATEWAY_URL ||
+  (import.meta.env.PROD
+    ? 'https://device-care-360-api-gateway.onrender.com'
+    : 'http://localhost:8080');
 
 // In-flight GET request deduplication map
 const inFlightRequests = new Map();

@@ -25,14 +25,18 @@ public class BookingService {
 
     public Booking createBooking(Booking booking) {
         try {
-            var techResp = technicianClient.getTechnicianById(booking.getTechnicianId());
-            if (techResp == null || techResp.getData() == null) {
-                throw new IllegalArgumentException("Technician not found: " + booking.getTechnicianId());
-            }
-            Map<String, Object> techData = techResp.getData();
-            Boolean available = (Boolean) techData.get("available");
-            if (available != null && !available) {
-                log.warn("Technician {} is currently not available", booking.getTechnicianId());
+            if (booking.getTechnicianId() != null && !booking.getTechnicianId().isBlank()) {
+                var techResp = technicianClient.getTechnicianById(booking.getTechnicianId());
+                if (techResp != null && techResp.getData() != null) {
+                    Map<String, Object> techData = techResp.getData();
+                    Boolean available = (Boolean) techData.get("available");
+                    if (available != null && !available) {
+                        log.warn("Technician {} is currently not marked available", booking.getTechnicianId());
+                    }
+                    if (booking.getTechnicianName() == null && techData.get("fullName") != null) {
+                        booking.setTechnicianName((String) techData.get("fullName"));
+                    }
+                }
             }
         } catch (Exception e) {
             log.error("Failed synchronous technician verification: {}", e.getMessage());
@@ -44,18 +48,22 @@ public class BookingService {
 
         Booking saved = repository.save(booking);
 
-        BookingCreatedEvent event = BookingCreatedEvent.builder()
-                .bookingId(saved.getId())
-                .userId(saved.getUserId())
-                .technicianId(saved.getTechnicianId())
-                .deviceId(saved.getDeviceId())
-                .issueDescription(saved.getIssueDescription())
-                .appointmentTime(saved.getAppointmentTime())
-                .estimatedCost(saved.getEstimatedCost())
-                .status(saved.getStatus())
-                .build();
+        try {
+            BookingCreatedEvent event = BookingCreatedEvent.builder()
+                    .bookingId(saved.getId())
+                    .userId(saved.getUserId())
+                    .technicianId(saved.getTechnicianId())
+                    .deviceId(saved.getDeviceId())
+                    .issueDescription(saved.getIssueDescription())
+                    .appointmentTime(saved.getAppointmentTime())
+                    .estimatedCost(saved.getEstimatedCost())
+                    .status(saved.getStatus())
+                    .build();
 
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, "booking.created", event);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, "booking.created", event);
+        } catch (Exception ex) {
+            log.warn("Could not dispatch BookingCreatedEvent to RabbitMQ (continuing): {}", ex.getMessage());
+        }
         return saved;
     }
 

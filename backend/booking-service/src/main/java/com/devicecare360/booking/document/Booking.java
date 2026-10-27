@@ -1,5 +1,6 @@
 package com.devicecare360.booking.document;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +21,15 @@ public class Booking {
     private String id;
     private String userId;
     private String technicianId;
+    private String technicianName;
     private String deviceId;
+    private String deviceModel;
+    private String deviceCategory;
     private String issueDescription;
+
+    @JsonAlias({"appointmentDate", "appointment_date"})
     private LocalDateTime appointmentTime;
+
     private BigDecimal estimatedCost;
     @Builder.Default
     private String status = "PENDING"; // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED

@@ -23,7 +23,11 @@ public class TechnicianController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TechnicianProfile>>> getAll() {
+    public ResponseEntity<ApiResponse<List<TechnicianProfile>>> getAll(
+            @RequestParam(required = false) String specialization) {
+        if (specialization != null && !specialization.isBlank()) {
+            return ResponseEntity.ok(ApiResponse.success(service.searchTechnicians(specialization, null, null, null)));
+        }
         return ResponseEntity.ok(ApiResponse.success(service.getAllTechnicians()));
     }
 
