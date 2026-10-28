@@ -21,6 +21,12 @@ public class TechnicianRegisteredEvent implements Serializable {
     private String phone;
     private List<String> specializations;
     private List<String> serviceAreas;
+    private Integer yearsOfExperience;
+    private Double hourlyRate;
+    private String city;
+    private String serviceArea;
+    private String professionalBio;
+    private String certificateUrl;
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 }

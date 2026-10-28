@@ -5,6 +5,11 @@ server:
 spring:
   application:
     name: technician-service
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 6MB
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb+srv://devicecare_admin:admin1234@cluster0.sfssdaq.mongodb.net/technician_db?retryWrites=true&w=majority&appName=Cluster0&serverSelectionTimeoutMS=5000&connectTimeoutMS=5000}
@@ -16,6 +21,15 @@ spring:
     listener:
       simple:
         auto-startup: false
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  url: ${CLOUDINARY_URL:}
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
 
 eureka:
   instance:

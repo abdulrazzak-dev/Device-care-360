@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { CANONICAL_SPECIALIZATIONS, matchesCategory, getCategoryDisplayLabel } from '../../utils/categoryConstants';
+
 // 4 Sample profiles used as demo fallback when the API returns an empty array
 const SAMPLE_DEMO_TECHNICIANS = [
   {
@@ -80,10 +82,7 @@ const SAMPLE_DEMO_TECHNICIANS = [
 
 const SPECIALIZATION_FILTERS = [
   { label: 'All Specializations', value: '' },
-  { label: 'Smartphone Repair', value: 'Smartphone Repair' },
-  { label: 'Laptop/PC Hardware', value: 'Laptop/PC Hardware' },
-  { label: 'Audio/Video Gear', value: 'Audio/Video Gear' },
-  { label: 'Smart Home Appliances', value: 'Smart Home Appliances' }
+  ...CANONICAL_SPECIALIZATIONS.map(s => ({ label: s.label, value: s.key }))
 ];
 
 const TechnicianDirectoryPage = () => {
@@ -133,17 +132,9 @@ const TechnicianDirectoryPage = () => {
   // Case-insensitive client filter so both demo data and API records filter consistently
   const filteredTechnicians = useMemo(() => {
     if (!selectedSpecialization) return technicians;
-    const filterLower = selectedSpecialization.toLowerCase().trim();
-
-    // Map common keywords
-    const keywords = filterLower.split(/[\s/]+/);
-
     return technicians.filter((tech) => {
-      const specs = tech.specializations || [];
-      return specs.some((s) => {
-        const sLower = s.toLowerCase();
-        return sLower.includes(filterLower) || keywords.some((kw) => kw.length > 2 && sLower.includes(kw));
-      });
+      const specs = tech.specializations || tech.categories || [];
+      return matchesCategory(specs, selectedSpecialization);
     });
   }, [technicians, selectedSpecialization]);
 

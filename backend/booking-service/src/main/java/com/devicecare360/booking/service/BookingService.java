@@ -5,11 +5,14 @@ import com.devicecare360.booking.config.RabbitMQConfig;
 import com.devicecare360.booking.document.Booking;
 import com.devicecare360.booking.repository.BookingRepository;
 import com.devicecare360.shared.event.*;
+import com.devicecare360.shared.model.DeviceSpecialization;
+import com.devicecare360.shared.model.VerificationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -24,22 +27,71 @@ public class BookingService {
     private final RabbitTemplate rabbitTemplate;
 
     public Booking createBooking(Booking booking) {
+        if (booking.getAppointmentTime() == null) {
+            throw new IllegalArgumentException("Appointment date and time must be provided.");
+        }
+        if (booking.getAppointmentTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Appointment date and time must be scheduled in the future.");
+        }
+
+        if (booking.getTechnicianId() == null || booking.getTechnicianId().isBlank()) {
+            throw new IllegalArgumentException("A certified technician must be selected for the booking.");
+        }
+
         try {
-            if (booking.getTechnicianId() != null && !booking.getTechnicianId().isBlank()) {
-                var techResp = technicianClient.getTechnicianById(booking.getTechnicianId());
-                if (techResp != null && techResp.getData() != null) {
-                    Map<String, Object> techData = techResp.getData();
-                    Boolean available = (Boolean) techData.get("available");
-                    if (available != null && !available) {
-                        log.warn("Technician {} is currently not marked available", booking.getTechnicianId());
-                    }
-                    if (booking.getTechnicianName() == null && techData.get("fullName") != null) {
-                        booking.setTechnicianName((String) techData.get("fullName"));
-                    }
+            var techResp = technicianClient.getTechnicianById(booking.getTechnicianId());
+            if (techResp == null || techResp.getData() == null) {
+                throw new IllegalArgumentException("Selected technician not found for ID: " + booking.getTechnicianId());
+            }
+
+            Map<String, Object> techData = techResp.getData();
+
+            // 1. Verify technician approval status
+            String status = (String) techData.get("verificationStatus");
+            if (!VerificationStatus.isApproved(status)) {
+                throw new IllegalStateException("Technician is not approved for receiving repair bookings. Current status: " + (status != null ? status : "PENDING"));
+            }
+
+            // 2. Verify technician availability
+            Boolean available = (Boolean) techData.get("available");
+            if (available == null && techData.get("isAvailable") != null) {
+                available = (Boolean) techData.get("isAvailable");
+            }
+            if (available != null && !available) {
+                throw new IllegalStateException("Selected technician is currently offline or unavailable for appointments.");
+            }
+
+            // 3. Verify device category match if category is specified
+            if (booking.getDeviceCategory() != null && !booking.getDeviceCategory().isBlank()) {
+                @SuppressWarnings("unchecked")
+                List<String> specs = (List<String>) techData.get("specializations");
+                if (specs == null) {
+                    @SuppressWarnings("unchecked")
+                    List<String> cats = (List<String>) techData.get("categories");
+                    specs = cats;
+                }
+                if (!DeviceSpecialization.matchesCategory(specs, booking.getDeviceCategory())) {
+                    throw new IllegalArgumentException("Selected technician does not support repairs for category: " + booking.getDeviceCategory());
                 }
             }
+
+            // 4. Populate technician details and server-authoritative rate
+            if (techData.get("fullName") != null) {
+                booking.setTechnicianName((String) techData.get("fullName"));
+            }
+            Object rateObj = techData.get("hourlyRate");
+            if (rateObj instanceof Number) {
+                booking.setEstimatedCost(BigDecimal.valueOf(((Number) rateObj).doubleValue()));
+            } else if (booking.getEstimatedCost() == null || booking.getEstimatedCost().compareTo(BigDecimal.ZERO) <= 0) {
+                booking.setEstimatedCost(BigDecimal.valueOf(75.00));
+            }
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.warn("Booking integrity validation failed: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("Failed synchronous technician verification: {}", e.getMessage());
+            log.error("Failed to verify technician via client: {}", e.getMessage());
+            throw new IllegalStateException("Unable to verify technician eligibility at this time. Please try again.");
         }
 
         booking.setStatus("PENDING");

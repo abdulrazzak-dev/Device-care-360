@@ -38,7 +38,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/devices/issues",
             "/api/devices/categories",
             "/api/repair-guides",
-            "/api/technicians",
             "/v3/api-docs",
             "/swagger-ui",
             "/actuator"
@@ -61,23 +60,22 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
+            HttpMethod method = request.getMethod();
 
-            // 1. Immediately bypass authentication for OPTIONS (preflight), CorsUtils, and open endpoints
-            if (HttpMethod.OPTIONS.equals(request.getMethod())
-                    || CorsUtils.isPreFlightRequest(request)
-                    || (path != null && (path.startsWith("/api/auth/") || isOpenEndpoint(path)))) {
+            // 1. Immediately bypass preflight requests
+            if (HttpMethod.OPTIONS.equals(method) || CorsUtils.isPreFlightRequest(request)) {
                 return chain.filter(exchange);
             }
 
-            // 2. Authorization Header check
-            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                log.warn("Missing Authorization header for path: {}", path);
-                return onError(exchange, HttpStatus.UNAUTHORIZED);
-            }
+            boolean isOpen = isStrictlyOpenEndpoint(path, method) || (path != null && path.startsWith("/api/auth/"));
 
+            // 2. Authorization Header check
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (authHeader == null || !authHeader.trim().regionMatches(true, 0, "Bearer ", 0, 7)) {
-                log.warn("Invalid Authorization header format for path: {}", path);
+                if (isOpen) {
+                    return chain.filter(exchange);
+                }
+                log.warn("Missing or invalid Authorization header for protected path: {}", path);
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
@@ -88,6 +86,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             }
 
             if (token.isEmpty()) {
+                if (isOpen) {
+                    return chain.filter(exchange);
+                }
                 log.warn("Empty Bearer token for path: {}", path);
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
@@ -106,12 +107,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                if (isOpen) {
+                    return chain.filter(exchange);
+                }
                 log.warn("JWT token expired for path: {}. Expiration: {}", path, e.getClaims() != null ? e.getClaims().getExpiration() : "unknown");
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
-            } catch (io.jsonwebtoken.security.SecurityException | io.jsonwebtoken.MalformedJwtException | io.jsonwebtoken.UnsupportedJwtException | IllegalArgumentException e) {
-                log.warn("Invalid JWT token for path: {}. Error: {}", path, e.getMessage());
-                return onError(exchange, HttpStatus.UNAUTHORIZED);
             } catch (Exception e) {
+                if (isOpen) {
+                    return chain.filter(exchange);
+                }
                 log.warn("JWT validation failed for path: {}. Error: {}", path, e.getMessage());
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
@@ -127,10 +131,31 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return reactor.core.publisher.Mono.empty();
     }
 
-    private boolean isOpenEndpoint(String path) {
+    private boolean isStrictlyOpenEndpoint(String path, HttpMethod method) {
         if (path == null) {
             return false;
         }
+        // Protected technician routes: /api/technicians/me and sub-routes are NEVER open
+        if (path.startsWith("/api/technicians/me")) {
+            return false;
+        }
+        // Admin verification routes are not open
+        if (path.contains("/verify") || path.contains("/status")) {
+            return false;
+        }
+        // Public technician browsing
+        if (path.equals("/api/technicians") || path.startsWith("/api/technicians/search")) {
+            return HttpMethod.GET.equals(method);
+        }
+        // Public individual technician profile by ID
+        if (path.matches("^/api/technicians/[^/]+$")) {
+            return HttpMethod.GET.equals(method);
+        }
+        // Sync registration from auth-service
+        if (path.equals("/api/technicians/register")) {
+            return HttpMethod.POST.equals(method);
+        }
+
         return OPEN_API_ENDPOINTS.stream().anyMatch(path::startsWith);
     }
 

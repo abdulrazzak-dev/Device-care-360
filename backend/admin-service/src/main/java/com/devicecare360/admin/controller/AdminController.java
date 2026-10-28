@@ -24,8 +24,9 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> verifyTechnician(
             @RequestHeader("X-User-Id") String adminId,
             @PathVariable String id,
-            @RequestParam String status) {
-        adminService.verifyTechnician(adminId, id, status);
+            @RequestParam String status,
+            @RequestParam(required = false) String reason) {
+        adminService.verifyTechnician(adminId, id, status, reason);
         return ResponseEntity.ok(ApiResponse.success(null, "Technician status updated to " + status));
     }
 }

@@ -83,6 +83,8 @@ spring:
           uri: ${TECHNICIAN_SERVICE_URL:https://device-care-360-technician-service.onrender.com}
           predicates:
             - Path=/api/technicians/**
+          filters:
+            - AuthenticationFilter
 
         - id: booking-service
           uri: ${BOOKING_SERVICE_URL:https://device-care-360-booking-service.onrender.com}

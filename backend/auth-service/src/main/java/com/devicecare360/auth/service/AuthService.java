@@ -23,9 +23,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.devicecare360.shared.model.DeviceSpecialization;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -141,6 +145,15 @@ public class AuthService {
         String targetUrl = technicianServiceUrl.replaceAll("/+$", "") + "/api/technicians/register";
         log.info("[CorrelationId: {}] Synchronizing technician profile with technician-service at: {}", correlationId, targetUrl);
         try {
+            List<String> canonicalSpecializations = Collections.emptyList();
+            if (request.getSpecializations() != null && !request.getSpecializations().isEmpty()) {
+                canonicalSpecializations = request.getSpecializations().stream()
+                        .map(DeviceSpecialization::normalizeToCanonical)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .collect(Collectors.toList());
+            }
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("id", technicianId);
             payload.put("fullName", request.getFullName());
@@ -148,8 +161,20 @@ public class AuthService {
             payload.put("phone", request.getPhone() != null ? request.getPhone() : "");
             payload.put("available", true);
             payload.put("verificationStatus", "PENDING");
-            payload.put("specializations", Collections.emptyList());
-            payload.put("serviceAreas", Collections.emptyList());
+            payload.put("specializations", canonicalSpecializations);
+            payload.put("categories", canonicalSpecializations);
+            payload.put("yearsOfExperience", request.getExperienceYears() != null ? request.getExperienceYears() : 1);
+            payload.put("experienceYears", request.getExperienceYears() != null ? request.getExperienceYears() : 1);
+            payload.put("hourlyRate", request.getHourlyRate() != null ? request.getHourlyRate() : 2500.0);
+            payload.put("city", request.getCity() != null ? request.getCity() : "");
+            payload.put("serviceArea", request.getServiceArea() != null ? request.getServiceArea() : "");
+            payload.put("serviceAreas", request.getServiceArea() != null && !request.getServiceArea().isBlank()
+                    ? List.of(request.getServiceArea())
+                    : Collections.emptyList());
+            payload.put("professionalBio", request.getProfessionalBio() != null ? request.getProfessionalBio() : "");
+            if (request.getCertificateUrl() != null && !request.getCertificateUrl().isBlank()) {
+                payload.put("certificateUrl", request.getCertificateUrl());
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -167,14 +192,31 @@ public class AuthService {
     private void publishRegistrationEvent(String userId, String username, String email, RegisterRequest request, String role, String correlationId) {
         try {
             if ("TECHNICIAN".equals(role)) {
+                List<String> canonicalSpecializations = Collections.emptyList();
+                if (request.getSpecializations() != null && !request.getSpecializations().isEmpty()) {
+                    canonicalSpecializations = request.getSpecializations().stream()
+                            .map(DeviceSpecialization::normalizeToCanonical)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.toList());
+                }
+
                 TechnicianRegisteredEvent techEvent = TechnicianRegisteredEvent.builder()
                         .technicianId(userId)
                         .userId(userId)
                         .email(email)
                         .fullName(request.getFullName())
                         .phone(request.getPhone())
-                        .specializations(Collections.emptyList())
-                        .serviceAreas(Collections.emptyList())
+                        .specializations(canonicalSpecializations)
+                        .serviceAreas(request.getServiceArea() != null && !request.getServiceArea().isBlank()
+                                ? List.of(request.getServiceArea())
+                                : Collections.emptyList())
+                        .yearsOfExperience(request.getExperienceYears() != null ? request.getExperienceYears() : 1)
+                        .hourlyRate(request.getHourlyRate() != null ? request.getHourlyRate() : 2500.0)
+                        .city(request.getCity())
+                        .serviceArea(request.getServiceArea())
+                        .professionalBio(request.getProfessionalBio())
+                        .certificateUrl(request.getCertificateUrl())
                         .build();
                 rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TECH_REGISTERED_ROUTING_KEY, techEvent);
                 log.info("[CorrelationId: {}] Published TechnicianRegisteredEvent to RabbitMQ successfully", correlationId);

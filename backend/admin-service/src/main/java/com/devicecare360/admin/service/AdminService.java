@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -19,19 +20,29 @@ public class AdminService {
     private final TechnicianAdminClient technicianAdminClient;
 
     public void verifyTechnician(String adminId, String technicianId, String status) {
-        technicianAdminClient.updateTechnician(technicianId, Map.of("verificationStatus", status));
+        verifyTechnician(adminId, technicianId, status, null);
+    }
+
+    public void verifyTechnician(String adminId, String technicianId, String status, String reason) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("verificationStatus", status);
+        if (reason != null && !reason.isBlank()) {
+            body.put("rejectionReason", reason.trim());
+        }
+
+        technicianAdminClient.updateTechnician(technicianId, body);
 
         AdminAuditLog auditLog = AdminAuditLog.builder()
                 .adminId(adminId)
                 .action("VERIFY_TECHNICIAN")
                 .targetEntity("TECHNICIAN")
                 .targetId(technicianId)
-                .details("Status set to: " + status)
+                .details("Status set to: " + status + (reason != null ? " | Reason: " + reason : ""))
                 .timestamp(LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);
-        log.info("Admin {} verified technician {} with status {}", adminId, technicianId, status);
+        log.info("Admin {} verified technician {} with status {} (reason: {})", adminId, technicianId, status, reason);
     }
 
     public Map<String, Object> getDashboardStats() {
