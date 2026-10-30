@@ -7,5 +7,8 @@ import java.util.List;
 
 public interface RepairGuideRepository extends MongoRepository<RepairGuide, String> {
     List<RepairGuide> findByCategory(String category);
+    List<RepairGuide> findByCategoryIgnoreCase(String category);
     List<RepairGuide> findByCategoryAndBrand(String category, String brand);
+    List<RepairGuide> findByCategoryIgnoreCaseAndBrandIgnoreCase(String category, String brand);
+    List<RepairGuide> findByApprovedTrue();
 }
