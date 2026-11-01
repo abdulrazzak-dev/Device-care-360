@@ -101,7 +101,7 @@ class BookingServiceTest {
     }
 
     @Test
-    @DisplayName("Create booking rejects offline/unavailable technician")
+    @DisplayName("Create booking rejects offline/unavailable technician with available=false")
     void testRejectUnavailableTechnician() {
         Booking input = Booking.builder()
                 .userId("user-123")
@@ -117,6 +117,50 @@ class BookingServiceTest {
                 "verificationStatus", "APPROVED"
         );
         when(technicianClient.getTechnicianById("tech-003")).thenReturn(ApiResponse.success(techMap));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> bookingService.createBooking(input));
+        assertTrue(ex.getMessage().contains("unavailable"));
+    }
+
+    @Test
+    @DisplayName("Create booking rejects technician with isAvailable=false")
+    void testRejectTechnicianWithIsAvailableFalse() {
+        Booking input = Booking.builder()
+                .userId("user-123")
+                .technicianId("tech-003")
+                .deviceCategory("Smartphone")
+                .appointmentTime(LocalDateTime.now().plusDays(2))
+                .build();
+
+        Map<String, Object> techMap = Map.of(
+                "id", "tech-003",
+                "fullName", "Offline Tech",
+                "isAvailable", false,
+                "verificationStatus", "APPROVED"
+        );
+        when(technicianClient.getTechnicianById("tech-003")).thenReturn(ApiResponse.success(techMap));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> bookingService.createBooking(input));
+        assertTrue(ex.getMessage().contains("unavailable"));
+    }
+
+    @Test
+    @DisplayName("Create booking rejects technician with missing/null availability (treats unconfigured as unavailable)")
+    void testRejectTechnicianWithNullAvailability() {
+        Booking input = Booking.builder()
+                .userId("user-123")
+                .technicianId("tech-legacy")
+                .deviceCategory("Smartphone")
+                .appointmentTime(LocalDateTime.now().plusDays(2))
+                .build();
+
+        // Legacy record missing availability field
+        Map<String, Object> techMap = new java.util.HashMap<>();
+        techMap.put("id", "tech-legacy");
+        techMap.put("fullName", "Legacy Tech");
+        techMap.put("verificationStatus", "APPROVED");
+
+        when(technicianClient.getTechnicianById("tech-legacy")).thenReturn(ApiResponse.success(techMap));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> bookingService.createBooking(input));
         assertTrue(ex.getMessage().contains("unavailable"));

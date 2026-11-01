@@ -203,16 +203,18 @@ public class TechnicianService {
     }
 
     public List<TechnicianProfile> getAllPublicTechnicians(String specialization) {
-        List<TechnicianProfile> approvedTechs = repository.findByVerificationStatusIn(APPROVED_STATUSES);
+        List<TechnicianProfile> eligibleTechs = repository.findByVerificationStatusInAndAvailable(APPROVED_STATUSES, true);
 
         if (specialization != null && !specialization.isBlank()) {
-            return approvedTechs.stream()
+            return eligibleTechs.stream()
+                    .filter(t -> Boolean.TRUE.equals(t.getAvailable()))
                     .filter(t -> DeviceSpecialization.matchesCategory(t.getSpecializations(), specialization))
                     .map(this::sanitizeForPublic)
                     .collect(Collectors.toList());
         }
 
-        return approvedTechs.stream()
+        return eligibleTechs.stream()
+                .filter(t -> Boolean.TRUE.equals(t.getAvailable()))
                 .map(this::sanitizeForPublic)
                 .collect(Collectors.toList());
     }
@@ -228,7 +230,11 @@ public class TechnicianService {
             pool = repository.findByVerificationStatus(status.trim().toUpperCase());
         } else {
             // Default to approved only for security
-            pool = repository.findByVerificationStatusIn(APPROVED_STATUSES);
+            if (available != null) {
+                pool = repository.findByVerificationStatusInAndAvailable(APPROVED_STATUSES, available);
+            } else {
+                pool = repository.findByVerificationStatusInAndAvailable(APPROVED_STATUSES, true);
+            }
         }
 
         return pool.stream()
@@ -302,8 +308,23 @@ public class TechnicianService {
         return updated;
     }
 
+    public TechnicianProfileDTO updateAvailability(String userId, boolean isAvailable) {
+        log.info("Updating availability for technician userId: {} to {}", userId, isAvailable);
+        TechnicianProfile profile = repository.findById(userId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Technician profile not found for ID: " + userId));
+
+        profile.setAvailable(isAvailable);
+        profile.setUpdatedAt(LocalDateTime.now());
+        TechnicianProfile saved = repository.save(profile);
+        log.info("Persisted availability={} for technician userId: {}", saved.getAvailable(), userId);
+        return TechnicianProfileDTO.fromEntity(saved);
+    }
+
     public TechnicianProfile setAvailability(String id, boolean available) {
-        TechnicianProfile existing = getTechnicianById(id);
+        TechnicianProfile existing = repository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Technician profile not found for ID: " + id));
         existing.setAvailable(available);
         existing.setUpdatedAt(LocalDateTime.now());
         return repository.save(existing);

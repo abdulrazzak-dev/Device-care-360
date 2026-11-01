@@ -47,7 +47,14 @@ export const technicianService = {
     return await apiClient.put(`/api/technicians/${id}/status`, { status, reason });
   },
 
+  updateMyAvailability: async (isAvailable) => {
+    return await apiClient.patch('/api/technicians/me/availability', { isAvailable });
+  },
+
   setAvailability: async (id, available) => {
+    if (id === 'me') {
+      return await apiClient.patch('/api/technicians/me/availability', { isAvailable: available });
+    }
     return await apiClient.put(`/api/technicians/${id}/availability?available=${available}`);
   }
 };

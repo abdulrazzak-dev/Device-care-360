@@ -30,6 +30,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(msg));
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(org.springframework.web.server.ResponseStatusException ex, HttpServletRequest request) {
+        String correlationId = request.getHeader("X-Correlation-Id");
+        String message = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        log.warn("[CorrelationId: {}] ResponseStatusException on path {}: status={}, message={}", correlationId, request.getRequestURI(), ex.getStatusCode(), message);
+        return ResponseEntity.status(ex.getStatusCode()).body(ApiResponse.error(message));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request) {
         String correlationId = request.getHeader("X-Correlation-Id");

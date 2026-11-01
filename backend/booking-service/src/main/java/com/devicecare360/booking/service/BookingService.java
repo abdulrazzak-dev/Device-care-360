@@ -52,12 +52,12 @@ public class BookingService {
                 throw new IllegalStateException("Technician is not approved for receiving repair bookings. Current status: " + (status != null ? status : "PENDING"));
             }
 
-            // 2. Verify technician availability
-            Boolean available = (Boolean) techData.get("available");
-            if (available == null && techData.get("isAvailable") != null) {
-                available = (Boolean) techData.get("isAvailable");
+            // 2. Verify technician availability (missing or false is treated as unavailable)
+            Boolean available = (Boolean) techData.get("isAvailable");
+            if (available == null) {
+                available = (Boolean) techData.get("available");
             }
-            if (available != null && !available) {
+            if (available == null || !Boolean.TRUE.equals(available)) {
                 throw new IllegalStateException("Selected technician is currently offline or unavailable for appointments.");
             }
 

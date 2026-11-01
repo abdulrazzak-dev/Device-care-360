@@ -15,4 +15,5 @@ public interface TechnicianProfileRepository extends MongoRepository<TechnicianP
     List<TechnicianProfile> findByVerificationStatusIn(Collection<String> statuses);
     List<TechnicianProfile> findByAvailable(boolean available);
     List<TechnicianProfile> findByVerificationStatusInAndAvailable(Collection<String> statuses, boolean available);
+    List<TechnicianProfile> findByVerificationStatusAndAvailable(String verificationStatus, boolean available);
 }

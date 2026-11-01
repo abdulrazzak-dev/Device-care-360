@@ -98,6 +98,12 @@ public class TechnicianProfile {
         this.yearsOfExperience = exp;
     }
 
+    @JsonProperty("available")
+    public Boolean getAvailable() {
+        return available != null ? available : false;
+    }
+
+    @JsonProperty("isAvailable")
     public Boolean getIsAvailable() {
         return available != null ? available : false;
     }

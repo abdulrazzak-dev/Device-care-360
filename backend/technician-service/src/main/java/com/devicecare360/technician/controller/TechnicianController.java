@@ -3,6 +3,7 @@ package com.devicecare360.technician.controller;
 import com.devicecare360.shared.dto.ApiResponse;
 import com.devicecare360.shared.security.JwtUtils;
 import com.devicecare360.technician.document.TechnicianProfile;
+import com.devicecare360.technician.dto.AvailabilityUpdateRequest;
 import com.devicecare360.technician.dto.CertificateUploadResponse;
 import com.devicecare360.technician.dto.TechnicianProfileDTO;
 import com.devicecare360.technician.dto.TechnicianStatusUpdateRequest;
@@ -52,7 +53,7 @@ public class TechnicianController {
     public ResponseEntity<ApiResponse<List<TechnicianProfile>>> getAll(
             @RequestParam(required = false) String specialization) {
         if (specialization != null && !specialization.isBlank()) {
-            return ResponseEntity.ok(ApiResponse.success(service.searchTechnicians(specialization, null, null, null)));
+            return ResponseEntity.ok(ApiResponse.success(service.getAllPublicTechnicians(specialization)));
         }
         return ResponseEntity.ok(ApiResponse.success(service.getAllTechnicians()));
     }
@@ -179,11 +180,47 @@ public class TechnicianController {
         return ResponseEntity.ok(ApiResponse.success(updated, "Technician profile updated successfully"));
     }
 
+    /**
+     * Authenticated technician updates own availability state.
+     * Endpoint: PATCH /api/technicians/me/availability
+     */
+    @PatchMapping("/me/availability")
+    public ResponseEntity<ApiResponse<TechnicianProfileDTO>> updateMyAvailability(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerRole,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @Valid @RequestBody AvailabilityUpdateRequest request) {
+        String userId = resolveUserId(headerUserId, authHeader);
+        String role = resolveUserRole(headerRole, authHeader);
+        validateTechnicianOrAdminRole(role);
+
+        TechnicianProfileDTO updated = service.updateAvailability(userId, request.getIsAvailable());
+        return ResponseEntity.ok(ApiResponse.success(updated, "Availability updated successfully"));
+    }
+
+    /**
+     * Updates technician availability by ID.
+     * Secured: Only an ADMIN can update another technician's availability;
+     * a technician can only update their own availability.
+     */
     @PutMapping("/{id}/availability")
-    public ResponseEntity<ApiResponse<TechnicianProfile>> setAvailability(
+    public ResponseEntity<ApiResponse<TechnicianProfileDTO>> setAvailability(
             @PathVariable String id,
-            @RequestParam boolean available) {
-        TechnicianProfile updated = service.setAvailability(id, available);
+            @RequestParam boolean available,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerRole,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        String userId = resolveUserId(headerUserId, authHeader);
+        String role = resolveUserRole(headerRole, authHeader);
+        validateTechnicianOrAdminRole(role);
+
+        String targetId = "me".equalsIgnoreCase(id) ? userId : id;
+        boolean isAdmin = role != null && (role.toUpperCase().contains("ADMIN"));
+        if (!isAdmin && !userId.equals(targetId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Technicians can only update their own availability");
+        }
+
+        TechnicianProfileDTO updated = service.updateAvailability(targetId, available);
         return ResponseEntity.ok(ApiResponse.success(updated, "Availability updated"));
     }
 
@@ -192,10 +229,7 @@ public class TechnicianController {
             return headerUserId.trim();
         }
         if (authHeader != null && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            String token = authHeader.substring(7).trim();
-            if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("'") && token.endsWith("'"))) {
-                token = token.substring(1, token.length() - 1).trim();
-            }
+            String token = sanitizeToken(authHeader.substring(7));
             try {
                 Claims claims = JwtUtils.extractAllClaims(token, jwtSecret);
                 String userId = claims.get("userId", String.class);
@@ -208,6 +242,43 @@ public class TechnicianController {
             }
         }
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid authorization credentials");
+    }
+
+    private String resolveUserRole(String headerRole, String authHeader) {
+        if (headerRole != null && !headerRole.isBlank()) {
+            return headerRole.trim();
+        }
+        if (authHeader != null && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            String token = sanitizeToken(authHeader.substring(7));
+            try {
+                Claims claims = JwtUtils.extractAllClaims(token, jwtSecret);
+                return claims.get("role", String.class);
+            } catch (Exception e) {
+                log.warn("Failed to extract role from Bearer token: {}", e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private String sanitizeToken(String raw) {
+        String token = raw.trim();
+        if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("'") && token.endsWith("'"))) {
+            token = token.substring(1, token.length() - 1).trim();
+        }
+        return token;
+    }
+
+    private void validateTechnicianOrAdminRole(String role) {
+        if (role == null || role.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: missing role");
+        }
+        String normalized = role.trim().toUpperCase();
+        if (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring(5);
+        }
+        if (!"TECHNICIAN".equals(normalized) && !"ADMIN".equals(normalized)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: user is not authorized as a technician");
+        }
     }
 
     private void validateAdminRole(String role) {

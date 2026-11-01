@@ -29,6 +29,11 @@ public class TechnicianProfileDTO {
     @JsonProperty("isAvailable")
     private Boolean isAvailable;
 
+    @JsonProperty("available")
+    public Boolean getAvailable() {
+        return isAvailable != null ? isAvailable : false;
+    }
+
     private String verificationStatus;
     private Double averageRating;
     private Integer totalReviews;

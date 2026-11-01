@@ -334,9 +334,17 @@ const TechnicianDirectoryPage = () => {
                             {tech.verificationStatus || 'Pending'}
                           </span>
                         )}
-                        <span className="badge bg-primary bg-opacity-10 text-primary extra-small px-2 py-0.5 rounded-pill">
-                          {tech.available ? 'Available' : 'Busy'}
-                        </span>
+                        {(tech.isAvailable !== undefined ? tech.isAvailable : tech.available) ? (
+                          <span className="badge bg-success bg-opacity-10 text-success extra-small px-2 py-0.5 rounded-pill d-inline-flex align-items-center gap-1">
+                            <span className="d-inline-block rounded-circle bg-success" style={{ width: '6px', height: '6px' }} />
+                            Available
+                          </span>
+                        ) : (
+                          <span className="badge bg-secondary bg-opacity-10 text-muted extra-small px-2 py-0.5 rounded-pill d-inline-flex align-items-center gap-1">
+                            <span className="d-inline-block rounded-circle bg-secondary" style={{ width: '6px', height: '6px' }} />
+                            Offline
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

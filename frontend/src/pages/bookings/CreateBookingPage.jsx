@@ -64,8 +64,12 @@ const CreateBookingPage = () => {
       const isApproved = status === 'APPROVED' || status === 'VERIFIED';
       if (!isApproved) return false;
 
-      // 2. Availability check
-      const isAvail = tech.available !== undefined ? tech.available : tech.isAvailable !== undefined ? tech.isAvailable : true;
+      // 2. Availability check (treat missing value as unavailable for booking eligibility)
+      const isAvail = tech.isAvailable !== undefined 
+        ? Boolean(tech.isAvailable) 
+        : tech.available !== undefined 
+          ? Boolean(tech.available) 
+          : false;
       if (!isAvail) return false;
 
       // 3. Category match check (if category is selected)

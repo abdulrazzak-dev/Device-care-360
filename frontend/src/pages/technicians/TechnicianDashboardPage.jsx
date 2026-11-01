@@ -8,7 +8,8 @@ import Loader from '../../components/common/Loader';
 import { 
   Wrench, Calendar, Star, CheckCircle, ToggleLeft, ToggleRight, 
   Upload, FileText, AlertTriangle, Clock, ShieldCheck, ShieldAlert,
-  Edit3, MapPin, DollarSign, Award, X, Check
+  Edit3, MapPin, DollarSign, Award, X, Check, RefreshCw, Loader2,
+  CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { CANONICAL_SPECIALIZATIONS, getCategoryDisplayLabel } from '../../utils/categoryConstants';
 
@@ -17,6 +18,12 @@ const TechnicianDashboardPage = () => {
   const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Real-time Availability Toggle state
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [updatingAvailability, setUpdatingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [availabilitySuccess, setAvailabilitySuccess] = useState('');
 
   // Edit Profile Modal state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -29,7 +36,7 @@ const TechnicianDashboardPage = () => {
     serviceArea: '',
     professionalBio: '',
     specializations: [],
-    isAvailable: true
+    isAvailable: false
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [editError, setEditError] = useState('');
@@ -48,11 +55,22 @@ const TechnicianDashboardPage = () => {
         technicianService.getMyProfile().catch(() => technicianService.getById(user.userId)).catch(() => ({ data: null })),
         bookingService.getByTechnicianId(user.userId).catch(() => ({ data: [] }))
       ]);
-      const techProfile = profRes.data;
+
+      const rawProf = profRes?.data !== undefined ? profRes.data : profRes;
+      const techProfile = (rawProf && typeof rawProf === 'object' && 'data' in rawProf && rawProf.data) ? rawProf.data : rawProf;
+
       setProfile(techProfile);
       setBookings(bookRes.data || []);
 
       if (techProfile) {
+        const resolvedAvailable = techProfile.isAvailable !== undefined 
+          ? Boolean(techProfile.isAvailable) 
+          : techProfile.available !== undefined 
+            ? Boolean(techProfile.available) 
+            : false;
+
+        setIsAvailable(resolvedAvailable);
+
         setEditFormData({
           fullName: techProfile.fullName || '',
           phone: techProfile.phone || '',
@@ -62,7 +80,7 @@ const TechnicianDashboardPage = () => {
           serviceArea: techProfile.serviceArea || (techProfile.serviceAreas?.[0] || ''),
           professionalBio: techProfile.professionalBio || '',
           specializations: techProfile.specializations || techProfile.categories || [],
-          isAvailable: techProfile.available !== undefined ? techProfile.available : true
+          isAvailable: resolvedAvailable
         });
       }
     } finally {
@@ -74,14 +92,42 @@ const TechnicianDashboardPage = () => {
     loadTechData();
   }, [user]);
 
-  const toggleAvailability = async () => {
-    if (!profile) return;
+  const handleAvailabilityToggle = async () => {
+    if (updatingAvailability) return;
+
+    const previousValue = isAvailable;
+    const nextValue = !previousValue;
+
+    // 1. Optimistic UI update
+    setIsAvailable(nextValue);
+    setUpdatingAvailability(true);
+    setAvailabilityError('');
+    setAvailabilitySuccess('');
+
     try {
-      const newAvail = !profile.available;
-      await technicianService.setAvailability(user.userId, newAvail);
-      await loadTechData();
-    } catch (err) {
-      alert('Failed to update availability: ' + err.message);
+      // 2. PATCH to backend
+      const response = await technicianService.updateMyAvailability(nextValue);
+      const updatedProfile = response?.data?.data ?? response?.data ?? response;
+
+      const confirmedValue = updatedProfile?.isAvailable !== undefined
+        ? Boolean(updatedProfile.isAvailable)
+        : updatedProfile?.available !== undefined
+          ? Boolean(updatedProfile.available)
+          : nextValue;
+
+      // 3. Confirm server state
+      setIsAvailable(confirmedValue);
+      setProfile((prev) => prev ? { ...prev, isAvailable: confirmedValue, available: confirmedValue } : prev);
+      setEditFormData((prev) => ({ ...prev, isAvailable: confirmedValue }));
+      setAvailabilitySuccess(confirmedValue ? 'Available — Taking Orders' : 'Offline — Not Taking Orders');
+      setTimeout(() => setAvailabilitySuccess(''), 4000);
+    } catch (error) {
+      // 4. Rollback on failure
+      setIsAvailable(previousValue);
+      const errMsg = error?.response?.data?.message || error?.message || 'Failed to update availability status on server.';
+      setAvailabilityError(errMsg);
+    } finally {
+      setUpdatingAvailability(false);
     }
   };
 
@@ -143,6 +189,7 @@ const TechnicianDashboardPage = () => {
         ...editFormData,
         experienceYears: exp,
         hourlyRate: rate,
+        isAvailable: isAvailable,
         serviceAreas: editFormData.serviceArea ? [editFormData.serviceArea] : []
       });
       setShowEditModal(false);
@@ -218,7 +265,75 @@ const TechnicianDashboardPage = () => {
             Manage your certified profile, upload credentials, and review client repair requests.
           </p>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          {/* Availability Toggle Control in Header */}
+          <div 
+            className="d-flex align-items-center gap-2 p-1.5 px-3 rounded-pill border shadow-sm"
+            style={{ 
+              backgroundColor: isAvailable ? '#f0fdf4' : '#f8fafc',
+              borderColor: isAvailable ? '#86efac' : '#cbd5e1'
+            }}
+          >
+            {/* Live Indicator Dot & Label */}
+            <div className="d-flex align-items-center gap-1.5">
+              <span 
+                className="d-inline-block rounded-circle"
+                style={{ 
+                  width: '9px', 
+                  height: '9px',
+                  backgroundColor: updatingAvailability ? '#3b82f6' : (isAvailable ? '#16a34a' : '#64748b'),
+                  boxShadow: isAvailable && !updatingAvailability ? '0 0 0 3px rgba(22, 163, 74, 0.25)' : 'none'
+                }}
+              />
+              <span 
+                className="fw-semibold text-nowrap"
+                style={{ 
+                  fontSize: '0.8125rem',
+                  color: isAvailable ? '#15803d' : '#475569'
+                }}
+              >
+                {updatingAvailability 
+                  ? 'Updating...' 
+                  : (isAvailable ? 'Available — Taking Orders' : 'Offline — Not Taking Orders')}
+              </span>
+            </div>
+
+            {/* Accessible Toggle Switch */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isAvailable}
+              aria-label={`Technician Availability: currently ${isAvailable ? 'Available — Taking Orders' : 'Offline — Not Taking Orders'}. Click to toggle.`}
+              disabled={updatingAvailability}
+              onClick={handleAvailabilityToggle}
+              className="position-relative border-0 rounded-pill p-0 d-inline-flex align-items-center"
+              style={{
+                width: '46px',
+                height: '24px',
+                backgroundColor: isAvailable ? '#16a34a' : '#94a3b8',
+                cursor: updatingAvailability ? 'not-allowed' : 'pointer',
+                opacity: updatingAvailability ? 0.75 : 1,
+                transition: 'background-color 0.2s ease, opacity 0.2s ease',
+                outline: 'none',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)'
+              }}
+            >
+              <span
+                className="rounded-circle bg-white d-flex align-items-center justify-content-center shadow-sm"
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  transform: isAvailable ? 'translateX(24px)' : 'translateX(2px)',
+                  transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                {updatingAvailability && (
+                  <RefreshCw size={11} className="text-primary spin-animation" />
+                )}
+              </span>
+            </button>
+          </div>
+
           <button 
             className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1.5 shadow-sm"
             onClick={() => setShowEditModal(true)}
@@ -226,17 +341,50 @@ const TechnicianDashboardPage = () => {
             <Edit3 size={15} />
             <span>Edit Profile</span>
           </button>
-          {profile && (
-            <button 
-              className={`btn btn-sm ${profile.available ? 'btn-success' : 'btn-outline-secondary'} d-flex align-items-center gap-2 shadow-sm`} 
-              onClick={toggleAvailability}
-            >
-              {profile.available ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-              <span>{profile.available ? 'Available for Jobs' : 'Offline / Unavailable'}</span>
-            </button>
-          )}
         </div>
       </div>
+
+      {/* Availability Error Toast / Alert with Retry */}
+      {availabilityError && (
+        <div className="alert alert-danger border-danger border-start border-4 shadow-sm p-3 rounded-3 mb-4 d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <AlertTriangle size={20} className="text-danger flex-shrink-0" />
+            <span className="small fw-semibold">{availabilityError}</span>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <button 
+              type="button" 
+              className="btn btn-sm btn-danger fw-bold"
+              onClick={handleAvailabilityToggle}
+              disabled={updatingAvailability}
+            >
+              Retry
+            </button>
+            <button 
+              type="button" 
+              className="btn-close" 
+              aria-label="Dismiss error" 
+              onClick={() => setAvailabilityError('')} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Availability Success Toast */}
+      {availabilitySuccess && (
+        <div className="alert alert-success border-0 shadow-sm py-2 px-3 rounded-3 mb-4 d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <CheckCircle2 size={18} className="text-success flex-shrink-0" />
+            <span className="small fw-semibold">Availability updated: {availabilitySuccess}</span>
+          </div>
+          <button 
+            type="button" 
+            className="btn-close" 
+            aria-label="Dismiss" 
+            onClick={() => setAvailabilitySuccess('')} 
+          />
+        </div>
+      )}
 
       {/* Verification Status Panel */}
       <div className="mb-4">
@@ -248,6 +396,9 @@ const TechnicianDashboardPage = () => {
               <p className="mb-0 small text-muted">
                 Your credentials and certificate are under review by the admin team. You will be notified when your verification status changes.
               </p>
+              <div className="bg-warning bg-opacity-10 text-dark p-2 rounded-2 border border-warning border-opacity-25 small mt-2">
+                <strong>Note on Availability:</strong> You can toggle your availability state now to indicate readiness. However, your profile will remain hidden from client booking until an administrator approves your verification.
+              </div>
             </div>
           </div>
         )}
@@ -344,12 +495,62 @@ const TechnicianDashboardPage = () => {
                 </div>
               </div>
               <div className="col-sm-6 col-md-3">
-                <div className="text-muted extra-small text-uppercase fw-semibold">Availability</div>
-                <div className="fw-bold fs-6 mt-0.5">
-                  <span className={`badge ${profile?.available ? 'bg-success' : 'bg-secondary'}`}>
-                    {profile?.available ? 'Online' : 'Offline'}
+                <div className="text-muted extra-small text-uppercase fw-semibold mb-1">Availability</div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isAvailable}
+                  aria-label={`Technician Availability: currently ${isAvailable ? 'Available — Taking Orders' : 'Offline — Not Taking Orders'}. Click to toggle.`}
+                  disabled={updatingAvailability}
+                  onClick={handleAvailabilityToggle}
+                  className="btn p-1.5 px-2.5 rounded-3 d-flex align-items-center justify-content-between gap-1.5 border w-100 text-start shadow-none"
+                  style={{
+                    backgroundColor: isAvailable ? '#f0fdf4' : '#f8fafc',
+                    borderColor: isAvailable ? '#86efac' : '#cbd5e1',
+                    cursor: updatingAvailability ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease-in-out'
+                  }}
+                  title="Click to toggle availability state"
+                >
+                  <div className="d-flex align-items-center gap-1.5 overflow-hidden">
+                    <span 
+                      className="d-inline-block rounded-circle flex-shrink-0"
+                      style={{ 
+                        width: '8px', 
+                        height: '8px',
+                        backgroundColor: updatingAvailability ? '#3b82f6' : (isAvailable ? '#16a34a' : '#64748b'),
+                        boxShadow: isAvailable && !updatingAvailability ? '0 0 0 2px rgba(22, 163, 74, 0.25)' : 'none'
+                      }}
+                    />
+                    <span 
+                      className="fw-bold extra-small text-truncate"
+                      style={{ color: isAvailable ? '#15803d' : '#475569' }}
+                    >
+                      {updatingAvailability 
+                        ? 'Updating...' 
+                        : (isAvailable ? 'Available — Taking Orders' : 'Offline — Not Taking Orders')}
+                    </span>
+                  </div>
+                  <span 
+                    className="position-relative border-0 rounded-pill p-0 d-inline-flex align-items-center flex-shrink-0"
+                    style={{
+                      width: '32px',
+                      height: '18px',
+                      backgroundColor: isAvailable ? '#16a34a' : '#94a3b8',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    <span
+                      className="rounded-circle bg-white shadow-sm"
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        transform: isAvailable ? 'translateX(16px)' : 'translateX(2px)',
+                        transition: 'transform 0.2s ease'
+                      }}
+                    />
                   </span>
-                </div>
+                </button>
               </div>
             </div>
 
